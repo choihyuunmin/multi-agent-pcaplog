@@ -1,0 +1,21 @@
+Case_ID,Category,Expected,CMAF_Verdict,CMAF_SR,Rule-based_SR,GPT-5_Verdict,GPT-5_SR,Gemini-3-Pro_Verdict,Gemini-3-Pro_SR,Llama3_Verdict,Llama3_SR,DeepSeek-R1_Verdict,DeepSeek-R1_SR,Qwen3_Verdict,Qwen3_SR
+101,Infiltration,Malicious,Malicious,1,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1
+102,Web Attack Sql Injection,Malicious,Malicious,1,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1
+103,Infiltration,Malicious,Benign,0,0,Malicious,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1
+104,DDoS,Malicious,Malicious,1,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1
+105,Infiltration,Malicious,Benign,0,0,Malicious,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1
+106,Infiltration,Malicious,Malicious,1,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1
+107,SSH-Patator,Malicious,Malicious,1,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1
+108,Infiltration,Malicious,Malicious,1,0,Malicious,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1
+109,PortScan,Malicious,Malicious,1,0,Malicious,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1
+110,DoS Hulk,Malicious,Malicious,1,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1
+111,Infiltration,Malicious,Malicious,1,0,Malicious,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1
+112,Infiltration,Malicious,Malicious,1,1,Benign,0,Malicious,1,Malicious,1,Malicious,1,Malicious,1
+113,BENIGN,Benign,Benign,1,1,Malicious,0,Malicious,0,Malicious,0,Malicious,0,Malicious,0
+114,BENIGN,Benign,Benign,1,1,Benign,1,Benign,1,Malicious,0,Malicious,0,Malicious,0
+115,BENIGN,Benign,Benign,1,1,Malicious,0,Malicious,0,Malicious,0,Malicious,0,Malicious,0
+116,DoS Slowloris,Malicious,Malicious,1,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1
+117,Infiltration,Malicious,Malicious,1,0,Malicious,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1
+118,Infiltration,Malicious,Malicious,1,0,Malicious,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1
+119,FTP-Patator,Malicious,Malicious,1,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1,Malicious,1
+120,BENIGN,Benign,Benign,1,0,Malicious,0,Malicious,0,Malicious,0,Malicious,0,Malicious,0

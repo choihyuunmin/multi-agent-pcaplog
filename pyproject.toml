@@ -1,0 +1,23 @@
+[project]
+name = "multi-agent-pcaplog"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "accelerate>=1.12.0",
+    "fastapi>=0.128.5",
+    "google-generativeai>=0.8.6",
+    "matplotlib>=3.10.8",
+    "nltk>=3.9.2",
+    "openai>=2.17.0",
+    "pandas>=3.0.0",
+    "pyshark>=0.6",
+    "redis[hiredis]>=5.0.0",
+    "rouge-score>=0.1.2",
+    "scikit-learn>=1.8.0",
+    "seaborn>=0.13.2",
+    "torch>=2.10.0",
+    "transformers>=5.1.0",
+    "uvicorn>=0.40.0",
+]

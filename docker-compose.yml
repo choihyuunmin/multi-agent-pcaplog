@@ -1,0 +1,99 @@
+# docker-compose.yml
+version: '3.8'
+
+networks:
+  mas-network:
+    driver: bridge
+
+services:
+  redis:
+    image: redis:alpine
+    container_name: mas-redis
+    networks:
+      - mas-network
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  packet-agent:
+    build: .
+    container_name: packet-agent
+    networks:
+      - mas-network
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - AGENT_ROLE=packet
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
+      - MAS_LLM_BACKEND=ollama
+      - MAS_LLM_MODEL=Llama-PcapLog-Tool
+    volumes:
+      - ./data:/app/data:ro
+      - ./results:/app/results
+    command: uv run python -m src.main --role packet
+    restart: unless-stopped
+
+  log-agent:
+    build: .
+    container_name: log-agent
+    networks:
+      - mas-network
+    depends_on:
+      redis:
+        condition: service_healthy
+    environment:
+      - AGENT_ROLE=log
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
+      - MAS_LLM_BACKEND=ollama
+      - MAS_LLM_MODEL=Llama-PcapLog-Tool
+    volumes:
+      - ./data:/app/data:ro
+      - ./results:/app/results
+    command: uv run python -m src.main --role log
+    restart: unless-stopped
+
+  master:
+    build: .
+    container_name: master-node
+    networks:
+      - mas-network
+    depends_on:
+      redis:
+        condition: service_healthy
+      packet-agent:
+        condition: service_started
+      log-agent:
+        condition: service_started
+    environment:
+      - AGENT_ROLE=master
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - OLLAMA_HOST=${OLLAMA_HOST:-http://host.docker.internal:11434}
+      - MAS_LLM_BACKEND=ollama
+      - MAS_LLM_MODEL=Llama-PcapLog-Tool
+    volumes:
+      - ./data:/app/data:ro
+      - ./results:/app/results
+    command: uv run python -m src.main --role master
+    restart: unless-stopped
+
+volumes:
+  redis-data:

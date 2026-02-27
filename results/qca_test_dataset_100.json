@@ -1,0 +1,2282 @@
+[
+    {
+        "id": 1,
+        "question": "Is the single TCP session from 192.168.10.8 to 192.168.10.50:3221 at 03:23 indicative of malicious activity (e.g., scan/probe/exploitation), and if so what attack type?",
+        "context": {
+            "flow_id": "192.168.10.8-192.168.10.50",
+            "protocol": 6,
+            "duration": 96.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 2,
+            "dest_port": 3221,
+            "timestamp": "6/7/2017 3:23"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Service log shows a normal accepted connection and normal close; flow matches (96s, 2/2 packets), single destination/port, no resets or anomalies—consistent with a benign health check/idle session rather than an attack."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.8"
+    },
+    {
+        "id": 2,
+        "question": "Is the traffic from 172.16.0.1 to web01 (192.168.10.50:80) malicious, and if so what attack type is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 98090921.0,
+            "total_fwd_pkts": 5,
+            "total_bwd_pkts": 7,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:43"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Suricata raised 'ET DOS HTTP GET flood detected (HULK-like)' for 172.16.0.1 -> 192.168.10.50:80, and UFW logged blocked SYNs; this is consistent with a DoS HULK-style HTTP GET flood against the web server."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 3,
+        "question": "Based on the syslog and network flow, is the activity from 172.16.0.1 to 192.168.10.50 malicious, and if so, what kind of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 11843132.0,
+            "total_fwd_pkts": 8,
+            "total_bwd_pkts": 5,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 11:13"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Suricata raised an ET DOS HTTP GoldenEye alert and Apache mod_evasive blacklisted 172.16.0.1 for a request flood to port 80, indicating an HTTP DoS (GoldenEye) attack on 192.168.10.50."
+        },
+        "ground_truth_label": "DoS GoldenEye",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 4,
+        "question": "Is the surge of HTTP traffic from 172.16.0.1 to web01 (192.168.10.50:80) malicious, and if so, what type of attack does it indicate?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 146445.0,
+            "total_fwd_pkts": 3,
+            "total_bwd_pkts": 6,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:43"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Nginx triggered request rate limiting (excess 120) and the firewall dropped SYNs from 172.16.0.1 to port 80, consistent with an HTTP GET flood/DoS Hulk attack against the web server."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 5,
+        "question": "An internal host 192.168.10.8 sent an outbound TCP SYN from port 52344 to 146.20.133.183:80, received no replies (conntrack UNREPLIED after ~7984s), and the flow shows 2 forward packets and 0 backward. Is this activity malicious (e.g., a port scan or C2 beacon) or benign, and why?",
+        "context": {
+            "flow_id": "192.168.10.8-146.20.133.183",
+            "protocol": 6,
+            "duration": 7984.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 2:32"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Single failed outbound HTTP attempt with no responses and no data transfer; consistent with a dropped/unreachable service, not scanning or C2 (no multiple targets/ports, minimal packets)."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.8"
+    },
+    {
+        "id": 6,
+        "question": "Is the activity from 172.16.0.1 to 192.168.10.50 on TCP/3389 malicious, and if so, what kind of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 31.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 3389,
+            "timestamp": "7/7/2017 3:08"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Firewall (UFW) blocked a TCP SYN to RDP (3389) and psad raised a port-scan alert; flow shows minimal packets over 31s consistent with probing. This indicates a TCP port scan targeting RDP."
+        },
+        "ground_truth_label": "PortScan",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 7,
+        "question": "Is the DNS traffic from host 192.168.10.14 to the internal DNS server 192.168.10.3 at 09:33:17 malicious (e.g., DNS tunneling/exfiltration) or just normal name resolution activity, and if malicious, what attack type is it?",
+        "context": {
+            "flow_id": "192.168.10.14-192.168.10.3",
+            "protocol": 17,
+            "duration": 49579.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 2,
+            "dest_port": 53,
+            "timestamp": "03/07/2017 09:33:17"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Single standard UDP/53 A-record lookup for example.com with NOERROR response (93.184.216.34), minimal packets (2/2), and no anomalous patterns or high-volume behavior—consistent with normal DNS resolution."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.14"
+    },
+    {
+        "id": 8,
+        "question": "Is the inbound TCP attempt from 172.16.0.1 to 192.168.10.50 on port 425 around 02:55 Jul 7 malicious, and if so, what type of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 65.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 425,
+            "timestamp": "7/7/2017 2:55"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "IDS (psad) reported a TCP port scan and iptables dropped the SYN; the flow shows a single probe over 65s to an uncommon port, consistent with a low-and-slow port scan."
+        },
+        "ground_truth_label": "PortScan",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 9,
+        "question": "Is the outbound TCP connection from 192.168.10.12 to 54.243.94.115 on port 80 at 01:22 malicious, and if so, what type of attack does it indicate?",
+        "context": {
+            "flow_id": "192.168.10.12-54.243.94.115",
+            "protocol": 6,
+            "duration": 5921583.0,
+            "total_fwd_pkts": 3,
+            "total_bwd_pkts": 1,
+            "dest_port": 80,
+            "timestamp": "6/7/2017 1:22"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Normal outbound HTTP connection: UFW allowed SYN from 192.168.10.12 and received SYN-ACK from 54.243.94.115; flow shows only a few packets consistent with a brief TCP handshake/HTTP attempt, not scanning or C2 behavior."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.12"
+    },
+    {
+        "id": 10,
+        "question": "Is the outbound UDP traffic from websrv1 (192.168.10.19) to 198.245.51.213:123 at 11:39 indicative of NTP-based abuse (e.g., amplification/reflective attack) or is it just normal time synchronization activity?",
+        "context": {
+            "flow_id": "192.168.10.19-198.245.51.213",
+            "protocol": 17,
+            "duration": 16653.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 123,
+            "timestamp": "5/7/2017 11:39"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "System logs show systemd-timesyncd synchronizing to 198.245.51.213:123 immediately after UFW allows the connection; the flow has a single request/response (UDP/123), consistent with normal NTP time sync, not high-volume or reflective abuse."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.19"
+    },
+    {
+        "id": 11,
+        "question": "Is the traffic from 172.16.0.1 to 192.168.10.50:80 malicious, and if so, what kind of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 98385871.0,
+            "total_fwd_pkts": 6,
+            "total_bwd_pkts": 8,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:47"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Fail2ban flagged and banned 172.16.0.1 for excessive HTTP GET requests to port 80, which matches DoS Hulk behavior targeting the web server."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 12,
+        "question": "Is this activity from 172.16.0.1 to 192.168.10.50 malicious, and if so, what type of attack does it indicate?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 10.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 8083,
+            "timestamp": "7/7/2017 2:55"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Firewall blocked a TCP SYN to port 8083 and psad explicitly flagged it as a port scan; flow shows a single-probe scan over 10s, consistent with low-volume port scanning."
+        },
+        "ground_truth_label": "PortScan",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 13,
+        "question": "An external host 104.155.59.61 (TCP src port 443) sent a SYN to internal 192.168.10.51:49861, then a FIN,ACK 53 seconds later; the flow shows 1 packet each way. Is this malicious, and if so what kind of attack?",
+        "context": {
+            "flow_id": "104.155.59.61-192.168.10.51",
+            "protocol": 6,
+            "duration": 53.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 49861,
+            "timestamp": "03/07/2017 10:00:30"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Traffic is consistent with return HTTPS traffic from a server (src port 443) to a client’s ephemeral port, with a normal FIN/ACK close after 53s and only a single connection observed; no scan or exploit pattern."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "104.155.59.61"
+    },
+    {
+        "id": 14,
+        "question": "Is the traffic from 172.16.0.1 to 192.168.10.50:80 malicious, and if so, what type of attack does the evidence indicate?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 38197.0,
+            "total_fwd_pkts": 3,
+            "total_bwd_pkts": 5,
+            "dest_port": 80,
+            "timestamp": "7/7/2017 4:10"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Kernel logs report 'Possible SYN flooding' and iptables drops repeated SYNs to port 80; this pattern indicates a SYN flood DDoS against the web server."
+        },
+        "ground_truth_label": "DDoS",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 15,
+        "question": "Is the DNS activity from 192.168.10.12 to 192.168.10.3 at 04:05 indicative of a malicious action (e.g., DNS tunneling or C2), and if so, what type of attack?",
+        "context": {
+            "flow_id": "192.168.10.12-192.168.10.3",
+            "protocol": 17,
+            "duration": 239.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 2,
+            "dest_port": 53,
+            "timestamp": "7/7/2017 4:05"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Single normal A-record lookup for ubuntu.com with a valid reply over UDP/53 and minimal packets; consistent with routine DNS resolution, no signs of tunneling or suspicious domain."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.12"
+    },
+    {
+        "id": 16,
+        "question": "Is the traffic from 172.16.0.1 to 192.168.10.50 at 03:08 malicious, and if so what kind of attack does it represent?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 44.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 2909,
+            "timestamp": "7/7/2017 3:08"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "UFW blocked an unsolicited TCP SYN to uncommon port 2909 and psad explicitly flagged a TCP SYN scan; the flow shows minimal packets over 44s consistent with a port scan probe (PortScan/TCP SYN scan)."
+        },
+        "ground_truth_label": "PortScan",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 17,
+        "question": "Is the inbound TCP traffic from 23.194.180.56:443 to 192.168.10.25:52632 around 10:36:14 malicious, and if so, what type of attack is it?",
+        "context": {
+            "flow_id": "23.194.180.56-192.168.10.25",
+            "protocol": 6,
+            "duration": 265.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 3,
+            "dest_port": 52632,
+            "timestamp": "03/07/2017 10:36:14"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Inbound SYN-ACK then PSH/ACK from port 443 to a high ephemeral port indicates a response to a client-initiated HTTPS session. UFW shows ALLOW, flow shows few packets and short activity—consistent with normal web traffic, not scanning or exploitation."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "23.194.180.56"
+    },
+    {
+        "id": 18,
+        "question": "Is the outbound TCP connection from 192.168.10.5 to 64.147.131.201 on port 443 at 10:22:30 malicious (e.g., C2/beaconing or data exfiltration), and if so, what type of attack?",
+        "context": {
+            "flow_id": "192.168.10.5-64.147.131.201",
+            "protocol": 6,
+            "duration": 1228890.0,
+            "total_fwd_pkts": 6,
+            "total_bwd_pkts": 8,
+            "dest_port": 443,
+            "timestamp": "03/07/2017 10:22:30"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Normal outbound HTTPS session: UFW allowed, small bidirectional packet count (6/8) and short duration consistent with TLS handshake; no signs of scanning, C2, or exfiltration."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.5"
+    },
+    {
+        "id": 19,
+        "question": "Does the DNS traffic from 192.168.10.9 to ns01 (192.168.10.3) at 10:24 indicate a malicious action such as DNS tunneling or DGA, or is it a normal DNS lookup? If malicious, what type of attack is it?",
+        "context": {
+            "flow_id": "192.168.10.9-192.168.10.3",
+            "protocol": 17,
+            "duration": 3315804.0,
+            "total_fwd_pkts": 4,
+            "total_bwd_pkts": 4,
+            "dest_port": 53,
+            "timestamp": "7/7/2017 10:24"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "The client performs standard A and AAAA queries for www.example.com over UDP/53 with a small, symmetric packet count (4/4) and typical timing; no unusual record types, volumes, or high-entropy subdomains indicative of tunneling or DGA."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.9"
+    },
+    {
+        "id": 20,
+        "question": "Is the inbound activity from 172.16.0.1 to 192.168.10.50:8001 malicious, and does it indicate a port scan?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 98.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 8001,
+            "timestamp": "7/7/2017 2:51"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "psad explicitly flags a TCP port scan over 98s and the iptables log shows dropped SYN traffic to port 8001; the sparse flow (1 fwd/1 bwd pkt) is consistent with scan behavior. Classified as PortScan."
+        },
+        "ground_truth_label": "PortScan",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 21,
+        "question": "Does the traffic from 172.16.0.1 to 192.168.10.50:80 indicate malicious activity, and if so, what attack type?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 14744.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 2,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:43"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Firewall logs show blocked TCP SYNs to port 80 and Nginx reports excess HTTP GET requests (client throttled), matching a DoS HTTP GET flood (Hulk)."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 22,
+        "question": "Is the DNS traffic from 192.168.10.12 to dns01 (192.168.10.3) on UDP/53 at 11:27:31 indicative of an attack (e.g., DNS tunneling or DGA), and if so, what type?",
+        "context": {
+            "flow_id": "192.168.10.12-192.168.10.3",
+            "protocol": 17,
+            "duration": 50049.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 2,
+            "dest_port": 53,
+            "timestamp": "03/07/2017 11:27:31"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Client 192.168.10.12 makes standard A and AAAA lookups for www.google.com to DNS server 192.168.10.3. Flow shows typical UDP/53 with 2 fwd/2 bwd packets at the same time as the syslog entries. No suspicious domain patterns or abnormal volume indicative of tunneling/DGA."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.12"
+    },
+    {
+        "id": 23,
+        "question": "Is the activity from 172.16.0.1 to 192.168.10.50:80 at 04:11 malicious, and if so, what kind of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 98201341.0,
+            "total_fwd_pkts": 9,
+            "total_bwd_pkts": 4,
+            "dest_port": 80,
+            "timestamp": "7/7/2017 4:11"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Kernel reports SYN flooding on port 80 and Suricata flags ET DOS HTTP GET Flood from 172.16.0.1 to 192.168.10.50, indicating a web DDoS/DoS (SYN/HTTP GET flood) against the server."
+        },
+        "ground_truth_label": "DDoS",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 24,
+        "question": "Based on the syslog and flow data, is the activity from 172.16.0.1 to 192.168.10.50 malicious, and what specific attack does it indicate?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 83351262.0,
+            "total_fwd_pkts": 6,
+            "total_bwd_pkts": 6,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:57"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Kernel flagged SYN flooding on port 80 and Apache mod_evasive blacklisted 172.16.0.1 for excessive GET requests (429), consistent with a DoS Hulk HTTP GET flood against the web server."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 25,
+        "question": "Is the activity from 172.16.0.1 to 192.168.10.50 around 10:49 malicious, and if so what type of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 98737009.0,
+            "total_fwd_pkts": 9,
+            "total_bwd_pkts": 6,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:49"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Firewall is blocking repeated TCP SYNs to port 80 and Nginx is rate-limiting excessive GET requests from 172.16.0.1, consistent with an HTTP GET flood (DoS Hulk) against the web server."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 26,
+        "question": "Given the UFW blocks on web01 for TCP SYNs from 172.16.0.1 to 192.168.10.50:80, the Snort alert \"DoS HTTP SYN flood against web service,\" and the flow showing multiple forward SYNs with zero responses, is this activity malicious and what kind of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 3083589.0,
+            "total_fwd_pkts": 5,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "7/7/2017 3:58"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Indicators match a SYN flood (DDoS) against the web service: IDS alert for HTTP SYN flood, firewall blocking repeated SYNs to port 80, and unidirectional flow with no replies."
+        },
+        "ground_truth_label": "DDoS",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 27,
+        "question": "Is the DNS activity from 192.168.10.3 to the gateway (dnsmasq) at 04:42 malicious (e.g., DNS tunneling, DGA/beaconing, or poisoning), and if so, what type of attack does it indicate?",
+        "context": {
+            "flow_id": "192.168.10.3-192.168.10.1",
+            "protocol": 17,
+            "duration": 30946.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 53,
+            "timestamp": "4/7/2017 4:42"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Single standard DNS A query from 192.168.10.3 for www.example.com with a normal reply (93.184.216.34) over UDP/53; low volume (1 request/1 response) and a well-known benign domain indicate routine name resolution, not tunneling or poisoning."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.3"
+    },
+    {
+        "id": 28,
+        "question": "Is the SSH activity from 72.5.205.44 to 192.168.10.5 at 02:15 malicious (e.g., brute-force or unauthorized access), or a normal authorized login? What kind of attack, if any, is occurring?",
+        "context": {
+            "flow_id": "72.5.205.44-192.168.10.5",
+            "protocol": 6,
+            "duration": 3.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 0,
+            "dest_port": 53625,
+            "timestamp": "7/7/2017 2:15"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Syslog shows a successful public key authentication for user 'alice' and a PAM session opened, with no preceding failures or rapid retries. The flow is minimal and consistent with a normal SSH connection; the listed port appears to be the client’s ephemeral port rather than the server’s SSH port. No indicators of brute force or intrusion."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "72.5.205.44"
+    },
+    {
+        "id": 29,
+        "question": "Is the 04:05 traffic from 172.16.0.1 to 192.168.10.50:80 malicious, and what type of attack does it indicate?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 11243652.0,
+            "total_fwd_pkts": 4,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "7/7/2017 4:05"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Snort raised 'ET DOS Potential SYN Flood to HTTP', UFW logged repeated TCP SYNs to port 80, and the flow is unidirectional (multiple fwd pkts, zero responses), consistent with a SYN flood DDoS targeting the web server."
+        },
+        "ground_truth_label": "DDoS",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 30,
+        "question": "Is the traffic from 172.16.0.1 to 192.168.10.50 on port 80 at 10:48 malicious, and if so, what type of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 98362749.0,
+            "total_fwd_pkts": 9,
+            "total_bwd_pkts": 6,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:48"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "iptables dropped excess concurrent SYNs and Apache mod_evasive blacklisted 172.16.0.1 for request flooding to /. This pattern matches an HTTP DoS (HULK) attack against 192.168.10.50:80."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 31,
+        "question": "Given the UFW blocks, Suricata alert of a possible HTTP GET flood to port 80, and a one-sided flow (6 pkts forward, 0 replies) over a long duration, is this activity malicious and what type of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 1764.0,
+            "total_fwd_pkts": 6,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 11:00"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Suricata raised an ET DOS HTTP GET flood alert to web port 80 with no responses, and the firewall blocked the connections. The unidirectional traffic pattern is consistent with a DoS (HULK) HTTP GET flood."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 32,
+        "question": "Is the DNS activity from 192.168.10.3 resolving www.example.com via the router’s dnsmasq service malicious (e.g., DNS tunneling/poisoning or C2) or just normal DNS resolution?",
+        "context": {
+            "flow_id": "192.168.10.3-192.168.10.1",
+            "protocol": 17,
+            "duration": 301.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 53,
+            "timestamp": "5/7/2017 4:44"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Single UDP/53 DNS query and response to a well-known domain (www.example.com → 93.184.216.34) with one request and one reply, matching normal DNS behavior; no signs of tunneling, poisoning, or C2."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.3"
+    },
+    {
+        "id": 33,
+        "question": "Is the outbound connection from web01 (192.168.10.51) to 162.213.33.48:443 observed on May 7 malicious (e.g., C2/beaconing or data exfiltration), or just a normal HTTPS session?",
+        "context": {
+            "flow_id": "192.168.10.51-162.213.33.48",
+            "protocol": 6,
+            "duration": 903587.0,
+            "total_fwd_pkts": 7,
+            "total_bwd_pkts": 7,
+            "dest_port": 443,
+            "timestamp": "5/7/2017 9:58"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Single outbound HTTPS flow with balanced 7/7 packets and conntrack marked ASSURED indicates a normal established TLS session; long duration likely due to keep-alive, with no signs of scanning, C2, or exfiltration."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.51"
+    },
+    {
+        "id": 34,
+        "question": "Is the 10:48 traffic from 172.16.0.1 to 192.168.10.50:80 malicious, and if so, what type of attack is indicated?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 7.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:48"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Suricata raised an ET DOS HULK alert (Attempted Denial of Service) for 172.16.0.1→192.168.10.50:80, IPTables logged dropped SYNs, and the flow is unidirectional with no responses—consistent with a HULK DoS attempt."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 35,
+        "question": "Is the outbound connection from 192.168.10.15 to 52.4.240.64 on TCP/443 at 02:55 malicious (e.g., C2/beaconing or exfiltration), or just a normal HTTPS session?",
+        "context": {
+            "flow_id": "192.168.10.15-52.4.240.64",
+            "protocol": 6,
+            "duration": 5849427.0,
+            "total_fwd_pkts": 9,
+            "total_bwd_pkts": 6,
+            "dest_port": 443,
+            "timestamp": "7/7/2017 2:55"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Firewall shows an allowed outbound SYN to 443 followed by an ESTABLISHED [ASSURED] conntrack entry; flow has small, balanced packet counts typical of a short client HTTPS session with an ephemeral source port and no anomalies or alerts."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.15"
+    },
+    {
+        "id": 36,
+        "question": "Is the outbound connection from 192.168.10.15 to 69.168.101.146 on TCP port 443 a malicious activity (e.g., C2 beaconing/exfiltration) or normal HTTPS traffic?",
+        "context": {
+            "flow_id": "192.168.10.15-69.168.101.146",
+            "protocol": 6,
+            "duration": 44716.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 1,
+            "dest_port": 443,
+            "timestamp": "4/7/2017 2:20"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Single outbound TCP connection with an ephemeral source port to standard HTTPS (443) allowed by the firewall; minimal packets and no indicators of scanning, lateral movement, or repeated beacons—consistent with normal web/updates traffic."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.15"
+    },
+    {
+        "id": 37,
+        "question": "Is the activity from 172.16.0.1 toward web server 192.168.10.50 malicious, and if so what attack type is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 1004.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:45"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Web server mod_evasive blacklisted 172.16.0.1 for DoS threshold exceeded due to repeated GETs to '/', kernel logs show dropped TCP SYNs to port 80, and the flow shows sustained activity to port 80 with no responses—consistent with an HTTP GET flood/DoS Hulk attack."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 38,
+        "question": "Is the traffic from 172.16.0.1 to 192.168.10.50:80 at 10:45 malicious, and if so what type of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 100097221.0,
+            "total_fwd_pkts": 6,
+            "total_bwd_pkts": 7,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:45"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Apache mod_evasive explicitly blacklisted 172.16.0.1 for a DOSAttack with excessive requests to '/', and iptables logged dropped SYNs to port 80; this matches an HTTP DoS (HULK) pattern."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 39,
+        "question": "Is the DNS traffic from 192.168.10.3 to the gateway’s dnsmasq at 01:13 malicious (e.g., DNS tunneling/DGA/exfiltration) or just normal browsing resolving www.google.com? What attack, if any, is indicated?",
+        "context": {
+            "flow_id": "192.168.10.3-192.168.10.1",
+            "protocol": 17,
+            "duration": 23283.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 53,
+            "timestamp": "7/7/2017 1:13"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Single UDP/53 A-record query from 192.168.10.3 to local dnsmasq with one request/one reply resolving www.google.com to a valid Google IP (142.250.191.36); no suspicious domain, volume, or anomaly indicative of tunneling, DGA, or amplification."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.3"
+    },
+    {
+        "id": 40,
+        "question": "Is the connection from 172.16.0.1 to 192.168.10.50:80 at 10:33 malicious, and if so what attack does it indicate?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 63125122.0,
+            "total_fwd_pkts": 7,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:33"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Suricata flagged ET DOS Slowloris/SlowHTTPTest; Apache logged request header read timeout from the same client; flow shows long-lived TCP with few packets and no server replies—consistent with a Slowloris/SlowHTTPTest DoS."
+        },
+        "ground_truth_label": "DoS Slowhttptest",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 41,
+        "question": "Do the DNS logs and flow showing 192.168.10.50 querying 192.168.10.3:53 for www.example.com (A and AAAA) indicate malicious activity such as DNS tunneling or beaconing, or is this normal name resolution?",
+        "context": {
+            "flow_id": "192.168.10.50-192.168.10.3",
+            "protocol": 17,
+            "duration": 175.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 2,
+            "dest_port": 53,
+            "timestamp": "5/7/2017 10:31"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "The host made standard A and AAAA lookups to its DNS server over UDP/53 with 2 requests and 2 responses—typical dual-stack DNS resolution with no abnormal volume or patterns suggesting tunneling or reconnaissance."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.50"
+    },
+    {
+        "id": 42,
+        "question": "Given the syslog entry, Snort alert, and flow record showing a single TCP SYN from 172.16.0.1 to 192.168.10.50:1783 followed by a RST over 44 seconds, is this activity malicious and what kind of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 44.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 1783,
+            "timestamp": "7/7/2017 3:09"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Snort reports a TCP SYN port scan from 172.16.0.1 to 192.168.10.50 on port 1783; the flow corroborates with 1 SYN and 1 RST over 44s, indicating reconnaissance/port scanning."
+        },
+        "ground_truth_label": "PortScan",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 43,
+        "question": "Is the inbound connection from 205.174.165.73 to 192.168.10.5:53724 malicious, and if so, does it indicate botnet command-and-control (C2) activity?",
+        "context": {
+            "flow_id": "205.174.165.73-192.168.10.5",
+            "protocol": 6,
+            "duration": 74.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 53724,
+            "timestamp": "7/7/2017 10:43"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Suricata raised 'ET MALWARE Possible Bot CnC Traffic' (Network Trojan) for 205.174.165.73→192.168.10.5, and the firewall logged a blocked inbound TCP SYN to a high port. Despite minimal packets, the IDS signature indicates botnet C2 activity targeting the internal host."
+        },
+        "ground_truth_label": "Bot",
+        "target_ip": "205.174.165.73"
+    },
+    {
+        "id": 44,
+        "question": "Is the traffic from 172.16.0.1 to 192.168.10.50:80 at 10:47 malicious, and if so, what kind of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 1.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:47"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Suricata generated an ET DOS Possible HTTP DoS - HULK alert, IPTables logged dropped SYNs to port 80, and the flow shows forward-only packets with no responses—consistent with an HTTP DoS (HULK) attempt."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 45,
+        "question": "Is the activity from 172.16.0.1 to web01 (192.168.10.50) at 10:49 malicious, and if so, does it indicate a DoS Hulk attack?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 99041656.0,
+            "total_fwd_pkts": 9,
+            "total_bwd_pkts": 7,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:49"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Nginx rate-limiting triggered for bursty GETs with randomized query string (/?rnd=...), and iptables dropping TCP SYNs to port 80 from 172.16.0.1—behavior consistent with a DoS Hulk application-layer flood."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 46,
+        "question": "Is the outbound activity from 192.168.10.8 to 23.60.139.27:80—two TCP SYNs 39 seconds apart with no replies—malicious (e.g., scanning or SYN flood), or a benign failed HTTP connection?",
+        "context": {
+            "flow_id": "192.168.10.8-23.60.139.27",
+            "protocol": 6,
+            "duration": 39.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "4/7/2017 11:43"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Two outbound HTTP SYNs to a single host/port with zero responses over 39s indicate a retried web connection or transient network issue, not scanning or attack behavior."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.8"
+    },
+    {
+        "id": 47,
+        "question": "Based on the UFW blocks and the flow showing repeated TCP SYNs to port 80 with no responses, is this activity malicious, and if so, what type of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 9815548.0,
+            "total_fwd_pkts": 5,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "7/7/2017 4:04"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Repeated unsolicited TCP SYNs to port 80 from 172.16.0.1 blocked by UFW with no responses (5 fwd, 0 bwd) indicate a SYN flood/DDoS against 192.168.10.50."
+        },
+        "ground_truth_label": "DDoS",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 48,
+        "question": "Is the outbound HTTP connection from 192.168.10.12 to 50.63.243.230:80 (SYN on Jun 7 12:14 and FIN/ACK the next day, very few packets over a long duration) malicious, and if so what kind of attack does it indicate?",
+        "context": {
+            "flow_id": "192.168.10.12-50.63.243.230",
+            "protocol": 6,
+            "duration": 72662.0,
+            "total_fwd_pkts": 3,
+            "total_bwd_pkts": 4,
+            "dest_port": 80,
+            "timestamp": "6/7/2017 12:14"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Normal outbound HTTP session with a long idle/keep-alive period: single destination on TCP 80, proper SYN then FIN/ACK closure, only 7 total packets, no repeated attempts or anomalies indicative of scanning, C2, or exfiltration."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.12"
+    },
+    {
+        "id": 49,
+        "question": "Is the traffic from 172.16.0.1 to web01 (192.168.10.50:80) malicious, and if so, what type of attack is occurring?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 72246554.0,
+            "total_fwd_pkts": 8,
+            "total_bwd_pkts": 5,
+            "dest_port": 80,
+            "timestamp": "7/7/2017 3:57"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Suricata raised a 'GPL DOS TCP SYN flood' alert and iptables logged repeated TCP SYNs to port 80 being dropped, indicating an attempted DDoS SYN flood against the web server."
+        },
+        "ground_truth_label": "DDoS",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 50,
+        "question": "Is the traffic from 172.16.0.1 to 192.168.10.50:80 at 10:55 malicious, and if so, what type of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 2.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:55"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Suricata raised 'ET DOS HULK HTTP DoS Tool User-Agent' on this flow; firewall logs show a blocked SYN to port 80; flow has no server responses—consistent with a DoS Hulk attempt."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 51,
+        "question": "Does the outbound HTTPS connection from 192.168.10.16 to 172.217.12.206 at 09:33 indicate malicious activity (e.g., C2 beaconing or data exfiltration), and if so, what type of attack is it?",
+        "context": {
+            "flow_id": "192.168.10.16-172.217.12.206",
+            "protocol": 6,
+            "duration": 4119246.0,
+            "total_fwd_pkts": 5,
+            "total_bwd_pkts": 1,
+            "dest_port": 443,
+            "timestamp": "5/7/2017 9:33"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Normal outbound HTTPS traffic: UFW allowed TCP 443, SYN then ACK/PSH from a workstation to 172.217.12.206 (Google-owned IP). Low packet count and typical client pattern; no indicators of scanning, exploitation, or C2."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.16"
+    },
+    {
+        "id": 52,
+        "question": "Is the traffic from 172.16.0.1 to 192.168.10.50:80 at 10:48 malicious, and if so, what kind of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 98274850.0,
+            "total_fwd_pkts": 5,
+            "total_bwd_pkts": 8,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:48"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Suricata raised ET DOS Hulk HTTP GET Flood alerts and the firewall logged drops for SYNs from 172.16.0.1 to 192.168.10.50:80; flow data to port 80 corroborates an attempted DoS (Hulk)."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 53,
+        "question": "Is the activity from 172.16.0.1 to 192.168.10.50 around 02:51 malicious, and if so, does it represent a port scan?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 66.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 52848,
+            "timestamp": "7/7/2017 2:51"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Syslog shows IPTables dropping a TCP SYN to port 52848 and psad explicitly flags a port scan from 172.16.0.1 with an iptables block added. The flow has minimal packets consistent with probing. This is a PortScan."
+        },
+        "ground_truth_label": "PortScan",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 54,
+        "question": "Is the 02:21 activity from 172.16.0.1 to srv-ssh (192.168.10.50) malicious, and if so, what kind of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 11458809.0,
+            "total_fwd_pkts": 21,
+            "total_bwd_pkts": 32,
+            "dest_port": 22,
+            "timestamp": "4/7/2017 2:21"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Multiple failed SSH logins (invalid user 'admin' and 'root') from 172.16.0.1 to port 22 within the same minute, with corresponding TCP flow, indicate an SSH brute-force attempt consistent with SSH-Patator."
+        },
+        "ground_truth_label": "SSH-Patator",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 55,
+        "question": "Is the outbound TCP/443 connection from 192.168.10.25 to 54.192.37.69 malicious (e.g., C2/beaconing or exfiltration over HTTPS), and if so, what attack type?",
+        "context": {
+            "flow_id": "192.168.10.25-54.192.37.69",
+            "protocol": 6,
+            "duration": 194801.0,
+            "total_fwd_pkts": 43,
+            "total_bwd_pkts": 62,
+            "dest_port": 443,
+            "timestamp": "4/7/2017 10:56"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Logs show a normal outbound HTTPS session allowed by the firewall with an established TCP connection; flow stats (duration and bidirectional packets) are consistent with regular web traffic to port 443 and do not indicate scanning, exploitation, or exfiltration behavior."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.25"
+    },
+    {
+        "id": 56,
+        "question": "Is the traffic from 172.16.0.1 to web server 192.168.10.50 malicious, and if so, what kind of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 98418752.0,
+            "total_fwd_pkts": 6,
+            "total_bwd_pkts": 6,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:46"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Web server mod_evasive blacklisted the source for excessive requests to '/', and IPTables logged repeated TCP SYNs to port 80. This pattern matches an HTTP flood/DoS (HULK) attack."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 57,
+        "question": "Is the DNS activity from 192.168.10.3 to the local resolver (192.168.10.1) at 01:46 malicious, and if so, what kind of attack (e.g., DNS tunneling, C2, poisoning)?",
+        "context": {
+            "flow_id": "192.168.10.3-192.168.10.1",
+            "protocol": 17,
+            "duration": 693516.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 53,
+            "timestamp": "6/7/2017 1:46"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Single UDP DNS request/response to port 53 resolving a well-known domain (www.example.com → 93.184.216.34) via dnsmasq; only 1 fwd/1 bwd packet, no anomalous volume or suspicious domain indicators."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.3"
+    },
+    {
+        "id": 58,
+        "question": "Is the traffic from 172.16.0.1 to 192.168.10.50:80 malicious, and does it indicate a DoS Hulk attack against the web server?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 1001.0,
+            "total_fwd_pkts": 5,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 11:00"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Kernel logs show repeated [SYNFLOOD DROP] to port 80 from 172.16.0.1, and the flow has long duration with only forward packets and no responses—behavior consistent with a web DoS (Hulk) attack."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 59,
+        "question": "Is the burst of HTTP requests from 172.16.0.1 to 192.168.10.50 malicious, and if so, what type of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 9002.0,
+            "total_fwd_pkts": 5,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 11:00"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Nginx triggered rate limiting for excessive GETs and Fail2Ban banned 172.16.0.1 for 'nginx-http-get-dos'; the flow to port 80 aligns with an HTTP GET flood consistent with DoS Hulk."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 60,
+        "question": "Is the traffic from 172.16.0.1 to 192.168.10.50:80 malicious, and if so, what type of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 98432727.0,
+            "total_fwd_pkts": 7,
+            "total_bwd_pkts": 6,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:49"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Suricata flagged 'ET DOS Possible HTTP DoS (HULK)' with excessive HTTP GETs to port 80, and UFW logged blocked SYNs to the web server—consistent with a DoS HULK attack."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 61,
+        "question": "Is the outbound connection from 192.168.10.16 to 173.231.178.115 on TCP port 443 malicious (e.g., C2, scan, or exfiltration), and if so, what type of attack does it indicate?",
+        "context": {
+            "flow_id": "192.168.10.16-173.231.178.115",
+            "protocol": 6,
+            "duration": 5689615.0,
+            "total_fwd_pkts": 10,
+            "total_bwd_pkts": 7,
+            "dest_port": 443,
+            "timestamp": "5/7/2017 1:11"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Normal client-initiated HTTPS session: SYN from the workstation followed by SYN/ACK from the server on 443, small bidirectional packet counts, short duration, and firewall explicitly allowing the traffic; no signs of scanning, failed handshakes, or anomalous behavior."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.16"
+    },
+    {
+        "id": 62,
+        "question": "Is the traffic from 172.16.0.1 to 192.168.10.50 on TCP/80 malicious, and if so what type of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 5958.0,
+            "total_fwd_pkts": 5,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:59"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Nginx triggered request limiting for http_flood from 172.16.0.1, iptables dropped TCP SYNs to port 80, and the flow shows long-duration HTTP traffic with no server responses—consistent with a DoS Hulk (HTTP flood) attack."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 63,
+        "question": "Is the traffic from 172.16.0.1 to 192.168.10.50:80 around 03:57 malicious, and if so, what type of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 842129.0,
+            "total_fwd_pkts": 3,
+            "total_bwd_pkts": 7,
+            "dest_port": 80,
+            "timestamp": "7/7/2017 3:57"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Snort flagged a GPL DOS TCP SYN Flood from 172.16.0.1 to 192.168.10.50:80, and Apache mod_evasive immediately blacklisted the source for a request flood—consistent with a Denial-of-Service/DDoS (SYN flood) attack."
+        },
+        "ground_truth_label": "DDoS",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 64,
+        "question": "Is the connection from 69.16.175.10:443 to 192.168.10.25:58248 at 11:15:03 malicious (e.g., exploit or C2), or just normal return traffic for an outbound HTTPS session?",
+        "context": {
+            "flow_id": "69.16.175.10-192.168.10.25",
+            "protocol": 6,
+            "duration": 43.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 58248,
+            "timestamp": "03/07/2017 11:15:03"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Return traffic from remote port 443 to a local ephemeral port (58248) consistent with an outbound HTTPS connection; conntrack shows a normal session teardown after 43s and the flow has only 1 packet each way, not indicative of an attack."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "69.16.175.10"
+    },
+    {
+        "id": 65,
+        "question": "Is the traffic from 172.16.0.1 to web01 (192.168.10.50) on port 80 at 10:56 malicious, and if so, what type of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 100687660.0,
+            "total_fwd_pkts": 7,
+            "total_bwd_pkts": 7,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:56"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Fail2ban banned 172.16.0.1 for nginx HTTP GET flood and UFW logged blocked TCP SYNs to port 80, consistent with a DoS (HULK-style) HTTP GET flood against the web server."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 66,
+        "question": "Is the traffic from 172.16.0.1 to 192.168.10.50:80 around 10:33 malicious, and does it indicate a Slow HTTP DoS (slowhttptest) against web01?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 63140457.0,
+            "total_fwd_pkts": 7,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:33"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Apache logged a 'Request header read timeout' from 172.16.0.1, and the flow shows a long-lived connection to port 80 with few packets and no server responses—behavior consistent with a Slow HTTP header DoS (slowhttptest)."
+        },
+        "ground_truth_label": "DoS Slowhttptest",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 67,
+        "question": "Is the TCP activity between 192.168.10.51 and 54.70.122.167 around 12:22:49 on port 443 malicious (e.g., C2/beaconing), and if so what kind of attack is it?",
+        "context": {
+            "flow_id": "54.70.122.167-192.168.10.51",
+            "protocol": 6,
+            "duration": 47.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 57697,
+            "timestamp": "03/07/2017 12:22:49"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Normal outbound HTTPS session: internal host initiates to external 443, kernel shows STATE=ESTABLISHED in both directions with expected ephemeral source port (57697). No signs of scanning, brute force, or anomalous ports; minimal packet counts suggest a short/keep-alive exchange."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "54.70.122.167"
+    },
+    {
+        "id": 68,
+        "question": "Is the 10:49 traffic from 172.16.0.1 to 192.168.10.50:80 malicious, and if so, what attack type is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 98729880.0,
+            "total_fwd_pkts": 5,
+            "total_bwd_pkts": 7,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:49"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Suricata raised 'ET DOS HULK HTTP GET Flood' (DoS) from 172.16.0.1 to 192.168.10.50:80, and nginx logged rate limiting with excess requests from the same client, confirming a HULK HTTP GET flood DoS."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 69,
+        "question": "Is the outbound TCP connection from 192.168.10.9 to 37.157.2.25:80 at 10:16 malicious (e.g., C2 beaconing, port scan, or data exfiltration), and if so what type of attack is it?",
+        "context": {
+            "flow_id": "192.168.10.9-37.157.2.25",
+            "protocol": 6,
+            "duration": 8199069.0,
+            "total_fwd_pkts": 3,
+            "total_bwd_pkts": 1,
+            "dest_port": 80,
+            "timestamp": "7/7/2017 10:16"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Single allowed outbound HTTP session with normal TCP flags (SYN then ACK/PSH), low packet counts, and no scanning or anomalous patterns; consistent with routine web traffic."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.9"
+    },
+    {
+        "id": 70,
+        "question": "Is the DNS activity from 192.168.10.17 to the DNS server (port 53) at 12:19 indicative of malicious behavior (e.g., DNS tunneling, DGA, cache poisoning), or is it a normal lookup?",
+        "context": {
+            "flow_id": "192.168.10.17-192.168.10.3",
+            "protocol": 17,
+            "duration": 71876.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 2,
+            "dest_port": 53,
+            "timestamp": "6/7/2017 12:19"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Single A query for www.example.com with a normal reply (93.184.216.34) and typical DNS flow (UDP/53, small bidirectional packet count); no signs of tunneling, DGAs, or anomalies."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.17"
+    },
+    {
+        "id": 71,
+        "question": "Are the DNS queries from 192.168.10.15 to dns01 (UDP/53) for www.example.com—first A then AAAA within ~201 seconds—indicative of a DNS-based attack (e.g., tunneling or amplification), or normal dual-stack name resolution?",
+        "context": {
+            "flow_id": "192.168.10.15-192.168.10.3",
+            "protocol": 17,
+            "duration": 201.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 2,
+            "dest_port": 53,
+            "timestamp": "03/07/2017 04:48:58"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Typical client behavior requesting both A and AAAA records from a local resolver with minimal packets (2 req/2 resp) over UDP/53; timing and volume match normal dual-stack DNS resolution, with no signs of tunneling or amplification."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.15"
+    },
+    {
+        "id": 72,
+        "question": "Is the DNS traffic from 192.168.10.14 to the internal resolver 192.168.10.3 on UDP/53 at 01:36 malicious (e.g., DNS tunneling, amplification, or exfiltration), and if so, what attack type is indicated?",
+        "context": {
+            "flow_id": "192.168.10.14-192.168.10.3",
+            "protocol": 17,
+            "duration": 30951.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 2,
+            "dest_port": 53,
+            "timestamp": "6/7/2017 1:36"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Single standard DNS A-record lookup for ubuntu.com from an internal host to its DNS server with minimal packets and normal ports; logs show an accepted query/response and no signs of tunneling, amplification, or abnormal volume."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.14"
+    },
+    {
+        "id": 73,
+        "question": "Is the traffic from 172.16.0.1 to 192.168.10.50:80 malicious, and if so, is it a DoS (Hulk) web request flood?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 78698226.0,
+            "total_fwd_pkts": 4,
+            "total_bwd_pkts": 5,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:47"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Firewall logged repeated TCP SYNs to port 80 being dropped and Apache mod_evasive denied the client for request flooding on '/', matching a DoS Hulk-style HTTP flood at the same time and hosts as the flow record."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 74,
+        "question": "Is the activity from 172.16.0.1 to 192.168.10.50 on TCP port 6006 malicious, and if so, what type of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 54.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 6006,
+            "timestamp": "7/7/2017 2:55"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Firewall and IDS logs show blocked TCP SYN to port 6006 and psad flags a port scan over 54s; the flow (1 fwd/1 bwd SYN-only) is consistent with a slow SYN port scan from 172.16.0.1."
+        },
+        "ground_truth_label": "PortScan",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 75,
+        "question": "Is the traffic from 172.16.0.1 to the web server 192.168.10.50:80 malicious, and does it represent a DoS/HULK-style HTTP request flood?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 182.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:46"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Suricata raised 'DOS HTTP request flood detected' to 192.168.10.50:80 from 172.16.0.1, firewall logs show SYN drops to port 80, and the flow is unidirectional with no server responses—consistent with a DoS HULK HTTP request flood."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 76,
+        "question": "Is the activity from 172.16.0.1 targeting 192.168.10.50 around 10:46 malicious, and if so, does it indicate a DoS (Hulk) attack on the web server?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 97323715.0,
+            "total_fwd_pkts": 8,
+            "total_bwd_pkts": 6,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:46"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Nginx triggered request limiting and UFW blocked repeated TCP SYNs from 172.16.0.1 to port 80; together with HTTP GETs to the root, this matches an HTTP GET flood consistent with DoS Hulk."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 77,
+        "question": "Is the DNS traffic from 192.168.10.51 to the DNS server 192.168.10.3 (UDP/53) at 04:25:54—querying example.com and receiving 93.184.216.34—malicious (e.g., DNS tunneling/DGA/C2) or benign?",
+        "context": {
+            "flow_id": "192.168.10.51-192.168.10.3",
+            "protocol": 17,
+            "duration": 201.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 2,
+            "dest_port": 53,
+            "timestamp": "03/07/2017 04:25:54"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Single standard A-record lookup to example.com with normal DNS flow (UDP/53, 2 fwd/2 bwd pkts) and matching query/response; no indicators of tunneling, DGA, or C2."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.51"
+    },
+    {
+        "id": 78,
+        "question": "Is the activity from 172.16.0.1 to 192.168.10.50:80 malicious, and if so what attack type is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 1.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:59"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Suricata flagged ET DOS Possible HTTP DoS (HULK); flow shows bursts to port 80 with 2 fwd/0 bwd over 1s and IPTables drops, consistent with DoS Hulk."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 79,
+        "question": "Does the allowed TCP SYN from 192.168.10.50 to 172.16.0.1 on high port 53374 at 09:29 indicate a malicious activity (e.g., port scan or SYN flood), and if so, what type of attack?",
+        "context": {
+            "flow_id": "192.168.10.50-172.16.0.1",
+            "protocol": 6,
+            "duration": 2.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 0,
+            "dest_port": 53374,
+            "timestamp": "4/7/2017 9:29"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Single, low-volume TCP SYN to a high ephemeral port with no response (2 fwd pkts, 0 bwd) and no scan/flood pattern; consistent with a transient or failed legitimate connection rather than an attack."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.50"
+    },
+    {
+        "id": 80,
+        "question": "Is the traffic from 172.16.0.1 to 192.168.10.50 around 04:05 malicious, and if so, what type of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 78022.0,
+            "total_fwd_pkts": 5,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "7/7/2017 4:05"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Syslog shows 'IPTABLES DDOS DROP' for repeated TCP SYNs to port 80 from 172.16.0.1; flow has only forward packets and zero responses over long duration. This indicates a TCP SYN flood DDoS."
+        },
+        "ground_truth_label": "DDoS",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 81,
+        "question": "Does the DNS traffic from 192.168.10.15 to the local resolver 192.168.10.3 (UDP/53) at 10:34—issuing A and AAAA queries for www.google.com—indicate malicious activity (e.g., DNS tunneling/C2), and if so, what attack type?",
+        "context": {
+            "flow_id": "192.168.10.15-192.168.10.3",
+            "protocol": 17,
+            "duration": 51211.0,
+            "total_fwd_pkts": 4,
+            "total_bwd_pkts": 4,
+            "dest_port": 53,
+            "timestamp": "7/7/2017 10:34"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Normal DNS resolution: a client queries A and AAAA for www.google.com via the local DNS server with a very small packet count and expected port 53 usage; no signs of tunneling or anomalous domains."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.15"
+    },
+    {
+        "id": 82,
+        "question": "Is the DNS traffic from 192.168.10.3 to the resolver 192.168.10.1 at 10:09 malicious (e.g., DNS tunneling/exfiltration or DGA beaconing), and if so what attack type?",
+        "context": {
+            "flow_id": "192.168.10.3-192.168.10.1",
+            "protocol": 17,
+            "duration": 23231.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 53,
+            "timestamp": "6/7/2017 10:09"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Normal DNS resolution: single A and AAAA lookups for www.example.com from a client to the local DNS server over UDP/53 with one request/response each; no volume, pattern, or domain indicators of tunneling or DGA."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.3"
+    },
+    {
+        "id": 83,
+        "question": "Is the activity from 172.16.0.1 to 192.168.10.50 on TCP port 1086 malicious, and if so, what kind of attack does it represent?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 32.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 1086,
+            "timestamp": "7/7/2017 2:55"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "UFW blocked a TCP SYN to port 1086 and psad flagged a TCP SYN scan/probe over 32s. The flow shows a single SYN probe with no established session, consistent with a port scan/reconnaissance attempt."
+        },
+        "ground_truth_label": "PortScan",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 84,
+        "question": "Based on the syslog and flow, is the activity from 172.16.0.1 to 192.168.10.50 malicious, and what type of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 60.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 3878,
+            "timestamp": "7/7/2017 2:52"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "PortScan: psad flagged a scan and iptables dropped an unsolicited TCP SYN to uncommon port 3878; the minimal flow (1 SYN/1 response, no connection) indicates probing rather than normal traffic."
+        },
+        "ground_truth_label": "PortScan",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 85,
+        "question": "Is the traffic from 172.16.0.1 to 192.168.10.50 on port 80 malicious, and if so, what kind of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 91577859.0,
+            "total_fwd_pkts": 8,
+            "total_bwd_pkts": 5,
+            "dest_port": 80,
+            "timestamp": "7/7/2017 4:09"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Kernel logs report 'Possible SYN flooding on port 80' and UFW blocks repeated SYNs from 172.16.0.1 to 192.168.10.50:80; this indicates a SYN flood DDoS against the web server."
+        },
+        "ground_truth_label": "DDoS",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 86,
+        "question": "At 02:49, host 192.168.10.9 queried the local DNS server (192.168.10.3/dnsmasq) for www.example.com. Is this DNS activity malicious (e.g., tunneling/DGA) or normal resolution?",
+        "context": {
+            "flow_id": "192.168.10.9-192.168.10.3",
+            "protocol": 17,
+            "duration": 23692.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 2,
+            "dest_port": 53,
+            "timestamp": "4/7/2017 2:49"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "A single standard UDP/53 A query with a normal reply; dnsmasq returned 93.184.216.34. The flow shows minimal packets (2/2) and no anomalies or repetition, consistent with ordinary DNS resolution."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.9"
+    },
+    {
+        "id": 87,
+        "question": "Is the inbound traffic from 172.16.0.1 to 192.168.10.50 on TCP port 7200 malicious, and what type of attack does it indicate?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 43.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 7200,
+            "timestamp": "7/7/2017 2:55"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Firewall logs show a blocked unsolicited TCP SYN to port 7200 and psad flags a TCP SYN scan over 43s; the flow shows minimal packets consistent with probing—indicative of a PortScan."
+        },
+        "ground_truth_label": "PortScan",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 88,
+        "question": "Is the single TCP connection attempt from 192.168.10.51 to 172.217.10.2 on port 80 at 01:38 malicious (e.g., a SYN scan/beacon), or just a normal HTTP connection attempt?",
+        "context": {
+            "flow_id": "192.168.10.51-172.217.10.2",
+            "protocol": 6,
+            "duration": 4.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 1:38"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Outbound SYN to TCP/80 with a SYN-ACK reply (1 packet each way) allowed by UFW indicates a normal web connection attempt; no follow-up packets or scanning patterns observed."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.51"
+    },
+    {
+        "id": 89,
+        "question": "Is the activity from 172.16.0.1 targeting 192.168.10.50:80 around 10:53 malicious, and if so, what attack is occurring?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 99202382.0,
+            "total_fwd_pkts": 6,
+            "total_bwd_pkts": 6,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:53"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Suricata generated an 'ET DOS Hulk HTTP GET Flood' alert and nginx logged request rate limiting exceeded from 172.16.0.1 to 192.168.10.50:80, indicating a DoS (Hulk) HTTP GET flood."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 90,
+        "question": "Does the traffic from 172.16.0.1 to 192.168.10.50:80 indicate malicious activity, specifically a TCP SYN flood (DDoS) against the web server?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 7233834.0,
+            "total_fwd_pkts": 5,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "7/7/2017 4:08"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Snort raised a 'DOS TCP SYN flood' alert; UFW blocked repeated SYNs to port 80; flow shows one-way TCP packets with no responses, consistent with a SYN flood DDoS."
+        },
+        "ground_truth_label": "DDoS",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 91,
+        "question": "Is the inbound SYN/ACK and subsequent FIN/ACK from 23.61.187.27:443 to 192.168.10.19:43040 malicious (e.g., scan or exploit), or simply a benign response to an outbound HTTPS connection? What type of attack, if any, is indicated?",
+        "context": {
+            "flow_id": "23.61.187.27-192.168.10.19",
+            "protocol": 6,
+            "duration": 66.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 43040,
+            "timestamp": "03/07/2017 10:06:24"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Traffic is a SYN/ACK and FIN/ACK from port 443 to an ephemeral port, consistent with a response to an outbound HTTPS session (likely CDN). Short-lived flow with minimal packets and UFW ALLOW indicates normal connection behavior, not scanning or exploitation."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "23.61.187.27"
+    },
+    {
+        "id": 92,
+        "question": "Is the DNS activity where 192.168.10.9 queries example.com via the local resolver (192.168.10.3:53) at 02:52:40 malicious (e.g., DNS tunneling, DGA/beaconing), or just normal DNS resolution?",
+        "context": {
+            "flow_id": "192.168.10.9-192.168.10.3",
+            "protocol": 17,
+            "duration": 31136.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 2,
+            "dest_port": 53,
+            "timestamp": "03/07/2017 02:52:40"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Single standard A record lookup to example.com over UDP/53 with a normal reply (93.184.216.34). Low packet count consistent with a query/response (possible retransmit), and syslog matches the flow. No signs of tunneling, DGA, or suspicious domain."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.9"
+    },
+    {
+        "id": 93,
+        "question": "Is the inbound TCP connection from 52.84.40.212 to 192.168.10.8:9287 at 03:29 indicative of malicious activity (e.g., exploitation attempt, C2 beaconing, or scan), or is it normal application traffic? What type of attack, if any, does it represent?",
+        "context": {
+            "flow_id": "52.84.40.212-192.168.10.8",
+            "protocol": 6,
+            "duration": 190.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 1,
+            "dest_port": 9287,
+            "timestamp": "7/7/2017 3:29"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Application log shows an accepted session that closed normally after 190s, and the flow record matches the duration and timing. No indicators of scanning, brute force, or exploitation; a single connection with normal teardown and minimal packets suggests a benign health check or idle session on the app port."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "52.84.40.212"
+    },
+    {
+        "id": 94,
+        "question": "Is the traffic from 172.16.0.1 to 192.168.10.50 malicious, and if so what kind of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 49.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 2190,
+            "timestamp": "7/7/2017 2:55"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "UFW blocked a SYN to port 2190 and psad explicitly flagged a TCP port scan; the flow shows minimal packets (1 fwd/1 bwd) over 49s consistent with a SYN scan."
+        },
+        "ground_truth_label": "PortScan",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 95,
+        "question": "Is the connection attempt from 172.16.0.1 to 192.168.10.50 on TCP port 60020 at 02:53 malicious, and if so, what type of attack does it represent?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 49.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 60020,
+            "timestamp": "7/7/2017 2:53"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Firewall and IDS flagged a TCP port scan: UFW blocked a SYN to tcp/60020 and psad reported 'TCP port scan detected'; the flow shows a minimal probe consistent with reconnaissance."
+        },
+        "ground_truth_label": "PortScan",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 96,
+        "question": "Does the activity from 172.16.0.1 to 192.168.10.50:80 at 10:52 appear malicious, and if so, what type of attack is it, given the Suricata alert 'ET DOS HTTP Hulk DoS Attack Attempt,' the UFW block of TCP SYNs, and a flow with only forward packets and no responses?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 982.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:52"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Suricata flagged an ET DOS HTTP Hulk DoS attack attempt against 192.168.10.50:80 from 172.16.0.1, the firewall blocked the SYNs, and the flow shows only outbound packets with no replies over a long duration—consistent with a Hulk DoS attempt."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 97,
+        "question": "Is the traffic from 172.16.0.1 to 192.168.10.50:80 malicious, and if so, what kind of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 3002612.0,
+            "total_fwd_pkts": 3,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 9:54"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Apache httpd logs report request header read timeouts and explicitly note possible slowloris; the flow shows an extremely long-lived HTTP connection with only a few forward packets and no responses, consistent with a Slowloris DoS attack."
+        },
+        "ground_truth_label": "DoS slowloris",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 98,
+        "question": "Do the UFW LIMIT BLOCK and Nginx 'limiting requests' logs from 172.16.0.1 to web01 at 04:11 indicate malicious activity, and if so, what type of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 177342.0,
+            "total_fwd_pkts": 3,
+            "total_bwd_pkts": 5,
+            "dest_port": 80,
+            "timestamp": "7/7/2017 4:11"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Both the firewall and Nginx simultaneously rate-limited/blocked excessive connections to port 80 from 172.16.0.1 (UFW LIMIT BLOCK and Nginx 'excess' requests), consistent with an HTTP/SYN flood DDoS attempt."
+        },
+        "ground_truth_label": "DDoS",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 99,
+        "question": "Is the traffic from 172.16.0.1 to web01 (192.168.10.50) around 11:00 malicious, and if so, what kind of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 16400.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 2,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 11:00"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Firewall logged blocked TCP SYNs to port 80 and Apache mod_evasive blacklisted 172.16.0.1 for an HTTP request flood, matching a DoS Hulk-style HTTP flood attack."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 100,
+        "question": "Is the connection attempt from 172.16.0.1 to 192.168.10.50 on TCP port 2288 at 02:52 malicious, and if so, what type of attack is it?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 30.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 2288,
+            "timestamp": "7/7/2017 2:52"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "UFW logged a blocked TCP SYN to uncommon port 2288 and psad raised a TCP SYN port scan alert; the flow shows a single SYN probe with no completed handshake, consistent with a port scan reconnaissance attempt."
+        },
+        "ground_truth_label": "PortScan",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 101,
+        "question": "Does RDP traffic from 172.16.0.2 to 192.168.10.50:3389 with multiple failed then successful logins indicate Qilin-style ransomware initial access?",
+        "context": {
+            "flow_id": "172.16.0.2-192.168.10.50",
+            "protocol": 6,
+            "duration": 1847.0,
+            "total_fwd_pkts": 47,
+            "total_bwd_pkts": 23,
+            "dest_port": 3389,
+            "timestamp": "2/14/2025 09:22"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "RDP brute force pattern consistent with Qilin ransomware initial access; leaked VPN credentials then RDP to domain controllers (2025 threat pattern)."
+        },
+        "ground_truth_label": "Infiltration",
+        "target_ip": "172.16.0.2"
+    },
+    {
+        "id": 102,
+        "question": "Is the HTTP traffic from 172.16.0.2 to 192.168.10.50:80 with malformed select_tables parameter indicative of SQL injection (CVE-2024-4145 WordPress plugin)?",
+        "context": {
+            "flow_id": "172.16.0.2-192.168.10.50",
+            "protocol": 6,
+            "duration": 892.0,
+            "total_fwd_pkts": 12,
+            "total_bwd_pkts": 8,
+            "dest_port": 80,
+            "timestamp": "3/21/2024 14:35"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "WordPress search-and-replace plugin CVE-2024-4145 SQL injection; improper neutralization in select_tables parameter allows database extraction."
+        },
+        "ground_truth_label": "Web Attack Sql Injection",
+        "target_ip": "172.16.0.2"
+    },
+    {
+        "id": 103,
+        "question": "Does traffic from 172.16.0.3 to 192.168.10.50:5432 indicate PostgreSQL psql SQL injection (CVE-2025-1094) exploitation?",
+        "context": {
+            "flow_id": "172.16.0.3-192.168.10.50",
+            "protocol": 6,
+            "duration": 2341.0,
+            "total_fwd_pkts": 89,
+            "total_bwd_pkts": 67,
+            "dest_port": 5432,
+            "timestamp": "2/13/2025 11:08"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "CVE-2025-1094 PostgreSQL psql SQL injection via invalid UTF-8; allows arbitrary shell/SQL execution, CVSS 8.1."
+        },
+        "ground_truth_label": "Infiltration",
+        "target_ip": "172.16.0.3"
+    },
+    {
+        "id": 104,
+        "question": "Is the massive SYN flood from 172.16.0.1 to 192.168.10.50:80 indicative of the 2025 DDoS attack surge?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 45210.0,
+            "total_fwd_pkts": 12500,
+            "total_bwd_pkts": 120,
+            "dest_port": 80,
+            "timestamp": "10/15/2025 16:42"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "SYN flooding and connection imbalance consistent with 2025 DDoS surge; asymmetric fwd/bwd packets indicate flood attack."
+        },
+        "ground_truth_label": "DDoS",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 105,
+        "question": "Does the sustained outbound data transfer from 192.168.10.25 to 45.33.xx.xx:443 suggest data exfiltration like 2024 personal data breach incidents?",
+        "context": {
+            "flow_id": "192.168.10.25-45.33.32.112",
+            "protocol": 6,
+            "duration": 2876543.0,
+            "total_fwd_pkts": 4521,
+            "total_bwd_pkts": 892,
+            "dest_port": 443,
+            "timestamp": "8/22/2024 02:15"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Asymmetric high-volume outbound HTTPS; 2024 breaches (307 incidents, 56% hacking) often involved exfiltration to external C2."
+        },
+        "ground_truth_label": "Infiltration",
+        "target_ip": "192.168.10.25"
+    },
+    {
+        "id": 106,
+        "question": "Is the connection from 192.168.10.51 to suspicious update server 185.234.xx.xx:443 a potential supply chain attack (2024 pattern)?",
+        "context": {
+            "flow_id": "192.168.10.51-185.234.45.67",
+            "protocol": 6,
+            "duration": 1247.0,
+            "total_fwd_pkts": 18,
+            "total_bwd_pkts": 24,
+            "dest_port": 443,
+            "timestamp": "5/12/2024 10:33"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Connection to non-standard update endpoint; 2024 supply chain attacks used security software vulnerabilities to inject malware via updates."
+        },
+        "ground_truth_label": "Infiltration",
+        "target_ip": "192.168.10.51"
+    },
+    {
+        "id": 107,
+        "question": "Are repeated SSH connection attempts from 172.16.0.2 to 192.168.10.5:22 indicative of credential stuffing or brute force?",
+        "context": {
+            "flow_id": "172.16.0.2-192.168.10.5",
+            "protocol": 6,
+            "duration": 892.0,
+            "total_fwd_pkts": 156,
+            "total_bwd_pkts": 78,
+            "dest_port": 22,
+            "timestamp": "7/8/2024 03:44"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "High volume SSH attempts; 2024 admin page abuse (23 incidents) and credential stuffing common for initial access."
+        },
+        "ground_truth_label": "SSH-Patator",
+        "target_ip": "172.16.0.2"
+    },
+    {
+        "id": 108,
+        "question": "Does RDP traffic from 10.0.0.5 to 192.168.10.50:3389 indicate credential harvesting for ransomware deployment?",
+        "context": {
+            "flow_id": "10.0.0.5-192.168.10.50",
+            "protocol": 6,
+            "duration": 2341.0,
+            "total_fwd_pkts": 89,
+            "total_bwd_pkts": 45,
+            "dest_port": 3389,
+            "timestamp": "6/18/2025 14:22"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "RDP to domain controller with multiple sessions; Qilin uses leaked VPN creds and RDP for lateral movement and encryptor deployment."
+        },
+        "ground_truth_label": "Infiltration",
+        "target_ip": "10.0.0.5"
+    },
+    {
+        "id": 109,
+        "question": "Is the TCP SYN scan from 172.16.0.3 to multiple ports on 192.168.10.50 reconnaissance for later attack?",
+        "context": {
+            "flow_id": "172.16.0.3-192.168.10.50",
+            "protocol": 6,
+            "duration": 45.0,
+            "total_fwd_pkts": 12,
+            "total_bwd_pkts": 3,
+            "dest_port": 5432,
+            "timestamp": "11/7/2024 08:15"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "TCP SYN probes to PostgreSQL and other ports; port scan reconnaissance precedes SQL injection and ransomware attacks."
+        },
+        "ground_truth_label": "PortScan",
+        "target_ip": "172.16.0.3"
+    },
+    {
+        "id": 110,
+        "question": "Is the HTTP GET flood from 172.16.0.1 to 192.168.10.50:80 a DoS Hulk-style attack?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 45678.0,
+            "total_fwd_pkts": 8900,
+            "total_bwd_pkts": 450,
+            "dest_port": 80,
+            "timestamp": "4/9/2025 11:20"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Excessive HTTP GET requests; HULK tool pattern, mod_evasive/fail2ban trigger, consistent with HTTP DoS."
+        },
+        "ground_truth_label": "DoS Hulk",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 111,
+        "question": "Does the bulk encryption activity from 192.168.10.8 to internal file shares suggest ransomware encryption (2025 Gunra/Black Shrantac pattern)?",
+        "context": {
+            "flow_id": "192.168.10.8-192.168.10.50",
+            "protocol": 6,
+            "duration": 12045.0,
+            "total_fwd_pkts": 4521,
+            "total_bwd_pkts": 2100,
+            "dest_port": 445,
+            "timestamp": "9/15/2025 22:18"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "High-volume SMB to multiple hosts; 2025 ransomware (56 incidents in Korea) uses encryptor_1.exe via PsExec, encryptor_2 on shares."
+        },
+        "ground_truth_label": "Infiltration",
+        "target_ip": "192.168.10.8"
+    },
+    {
+        "id": 112,
+        "question": "Is the periodic outbound connection from 192.168.10.5 to 205.174.165.73:443 a C2 beacon or botnet callback?",
+        "context": {
+            "flow_id": "192.168.10.5-205.174.165.73",
+            "protocol": 6,
+            "duration": 903587.0,
+            "total_fwd_pkts": 14,
+            "total_bwd_pkts": 14,
+            "dest_port": 53724,
+            "timestamp": "7/7/2017 10:43"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Long-duration low-packet connection to unusual port; Suricata ET MALWARE Bot CnC - consistent with callback/C2 beacon."
+        },
+        "ground_truth_label": "Infiltration",
+        "target_ip": "192.168.10.5"
+    },
+    {
+        "id": 113,
+        "question": "Is the HTTPS session from 192.168.10.12 to 54.243.94.115:443 normal web browsing?",
+        "context": {
+            "flow_id": "192.168.10.12-54.243.94.115",
+            "protocol": 6,
+            "duration": 45.0,
+            "total_fwd_pkts": 8,
+            "total_bwd_pkts": 7,
+            "dest_port": 443,
+            "timestamp": "6/7/2017 01:22"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Normal HTTPS handshake and bidirectional traffic; standard web browsing to port 443."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.12"
+    },
+    {
+        "id": 114,
+        "question": "Is the NTP traffic from 192.168.10.19 to 198.245.51.213:123 legitimate time sync?",
+        "context": {
+            "flow_id": "192.168.10.19-198.245.51.213",
+            "protocol": 17,
+            "duration": 2.0,
+            "total_fwd_pkts": 1,
+            "total_bwd_pkts": 1,
+            "dest_port": 123,
+            "timestamp": "5/7/2017 11:39"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "UDP/123 NTP; systemd-timesyncd synchronized to time server - normal operation."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.19"
+    },
+    {
+        "id": 115,
+        "question": "Is the DNS query from 192.168.10.9 for www.example.com normal name resolution?",
+        "context": {
+            "flow_id": "192.168.10.9-192.168.10.3",
+            "protocol": 17,
+            "duration": 1.0,
+            "total_fwd_pkts": 2,
+            "total_bwd_pkts": 2,
+            "dest_port": 53,
+            "timestamp": "7/7/2017 10:24"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "Standard DNS A/AAAA query and reply; normal name resolution."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.9"
+    },
+    {
+        "id": 116,
+        "question": "Does the slow HTTP request from 172.16.0.2 to 192.168.10.50:80 indicate Slowloris DoS?",
+        "context": {
+            "flow_id": "172.16.0.2-192.168.10.50",
+            "protocol": 6,
+            "duration": 3600.0,
+            "total_fwd_pkts": 3,
+            "total_bwd_pkts": 0,
+            "dest_port": 80,
+            "timestamp": "5/7/2017 10:33"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Request header read timeout, minimal packets; Suricata ET DOS Slowloris/SlowHTTPTest - keeps connections open to exhaust server."
+        },
+        "ground_truth_label": "DoS Slowloris",
+        "target_ip": "172.16.0.2"
+    },
+    {
+        "id": 117,
+        "question": "Is the unauthenticated request from 172.16.0.4 to management interface port 8443 an Expedition SQL injection (CVE-2024-9465)?",
+        "context": {
+            "flow_id": "172.16.0.4-192.168.10.50",
+            "protocol": 6,
+            "duration": 234.0,
+            "total_fwd_pkts": 15,
+            "total_bwd_pkts": 12,
+            "dest_port": 8443,
+            "timestamp": "11/14/2024 09:45"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "CVE-2024-9465 Palo Alto Expedition SQLi; unauthenticated access to DB, password hashes, device config - in CISA KEV."
+        },
+        "ground_truth_label": "Infiltration",
+        "target_ip": "172.16.0.4"
+    },
+    {
+        "id": 118,
+        "question": "Does the traffic from 192.168.10.30 to external API suggest AI-generated phishing or FraudGPT abuse?",
+        "context": {
+            "flow_id": "192.168.10.30-104.18.32.45",
+            "protocol": 6,
+            "duration": 2341.0,
+            "total_fwd_pkts": 234,
+            "total_bwd_pkts": 189,
+            "dest_port": 443,
+            "timestamp": "1/20/2025 15:33"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "2025 threat: FraudGPT/WormGPT abuse for AI-generated phishing; unusual API patterns to crime-specialized AI endpoints."
+        },
+        "ground_truth_label": "Infiltration",
+        "target_ip": "192.168.10.30"
+    },
+    {
+        "id": 119,
+        "question": "Are the FTP login attempts from 172.16.0.1 to 192.168.10.50:21 brute force?",
+        "context": {
+            "flow_id": "172.16.0.1-192.168.10.50",
+            "protocol": 6,
+            "duration": 456.0,
+            "total_fwd_pkts": 67,
+            "total_bwd_pkts": 34,
+            "dest_port": 21,
+            "timestamp": "4/8/2024 07:22"
+        },
+        "expected_answer": {
+            "verdict": "Malicious",
+            "reason": "Multiple FTP AUTH attempts; FTP brute force pattern for credential theft or initial access."
+        },
+        "ground_truth_label": "FTP-Patator",
+        "target_ip": "172.16.0.1"
+    },
+    {
+        "id": 120,
+        "question": "Is the SSH connection from 192.168.10.5 to external host with publickey auth legitimate?",
+        "context": {
+            "flow_id": "192.168.10.5-72.5.205.44",
+            "protocol": 6,
+            "duration": 190.0,
+            "total_fwd_pkts": 25,
+            "total_bwd_pkts": 24,
+            "dest_port": 22,
+            "timestamp": "7/7/2017 02:15"
+        },
+        "expected_answer": {
+            "verdict": "Benign",
+            "reason": "sshd Accepted publickey for alice - normal SSH key-based authentication, session opened and closed normally."
+        },
+        "ground_truth_label": "BENIGN",
+        "target_ip": "192.168.10.5"
+    }
+]

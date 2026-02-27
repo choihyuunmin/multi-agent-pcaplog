@@ -1,0 +1,8 @@
+Model,Arch,SR,Latency,Tokens
+MAS,MAS,0.94,2.97,805.65
+Rule,Rule,0.78,0,0
+gpt-5,SA,0.87,15.53,1535.58
+gemini-3,SA,0.82,19.44,2583.52
+llama3,SA,0.85,21.37,1634.24
+deepseek-r1,SA,0.78,20.55,1539.09
+qwen3,SA,0.86,29.08,1805.51
