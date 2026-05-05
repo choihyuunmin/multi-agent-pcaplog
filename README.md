@@ -240,11 +240,193 @@ docker-compose exec redis redis-cli ping
 docker-compose exec packet-agent tshark --version
 ```
 
-## License
+## Reproducibility Guide
 
-MIT License
+This section provides detailed information for reproducing the experiments
+and results described in the paper:
+**"A Collaborative Multi-Agent Framework for Network Packets and System Logs Analysis"**
+
+### Model Training Details (Llama-PcapLog Fine-tuning)
+
+| Parameter | Value |
+|---|---|
+| **Base Model** | Meta-Llama-3-8B (8B parameters) |
+| **Fine-tuning Method** | QLoRA (4-bit quantization + LoRA) |
+| **LoRA Rank (r)** | 64 |
+| **LoRA Alpha (α)** | 16 |
+| **LoRA Dropout** | 0 |
+| **LoRA Target Modules** | q_proj, k_proj, v_proj, o_proj, gate_proj, down_proj, up_proj |
+| **Quantization** | 4-bit NF4 (BitsAndBytes) |
+| **Max Sequence Length** | 2048 tokens |
+| **Optimizer** | AdamW (torch) |
+| **Learning Rate** | 2e-4 |
+| **LR Scheduler** | Cosine annealing |
+| **Warmup Ratio** | 0.1 |
+| **Training Epochs** | 3 |
+| **Batch Size** | 2 (per device) |
+| **Gradient Accumulation Steps** | 4 (effective batch size = 8) |
+| **Max Gradient Norm** | 0.3 |
+| **Precision** | FP16 (mixed precision) |
+| **Gradient Checkpointing** | Enabled |
+| **Train/Validation Split** | 20% / 80% |
+
+#### Training Dataset
+
+The fine-tuning dataset is constructed from two sources:
+1. **PCAP data** — Processed via `PcapProcessor` from raw packet captures (CIC-IDS2017).
+2. **Syslog data** — Processed via `SyslogProcessor` from system log files.
+
+Each sample follows the **Alpaca instruction format**:
+```
+### Instruction:
+{question about the data}
+
+### Input:
+{structured packet/log data}
+
+### Response:
+{analysis answer}
+```
+
+Additional diverse tasks (Q&A, code generation, expert analysis) are generated
+via a **Self-Instruct** strategy using GPT-4o-mini.
+
+### Inference Configuration
+
+| Parameter | Value |
+|---|---|
+| **Inference Framework** | Ollama (v0.5+) |
+| **Model Format** | GGUF (quantized from merged LoRA + base model) |
+| **Temperature** | default (via Ollama) |
+| **Top-K / Top-P** | default |
+| **Max Context** | 2048 tokens |
+| **Serving** | OpenAI-compatible API (`/v1/chat/completions`) |
+
+### Hardware & Software Environment
+
+| Component | Specification |
+|---|---|
+| **Training GPU** | NVIDIA A100 80GB / RTX 4090 24GB |
+| **Inference GPU** | NVIDIA RTX 3090 24GB (or CPU-only via Ollama) |
+| **CPU** | AMD Ryzen 9 / Intel Xeon |
+| **RAM** | 64GB+ |
+| **OS** | Ubuntu 22.04 LTS |
+| **Python** | 3.11+ |
+| **PyTorch** | 2.10+ |
+| **Transformers** | 5.1+ |
+| **PEFT** | Latest (LoRA support) |
+| **BitsAndBytes** | Latest (4-bit quantization) |
+| **Ollama** | 0.5+ |
+| **Docker** | 24+ with Compose v2 |
+| **Redis** | 7+ (Alpine) |
+
+### Evaluation Metrics
+
+| Metric | Description | Formula |
+|---|---|---|
+| **Success Rate (SR)** | Classification accuracy | `SR = Correct / Total` |
+| **Latency** | Average wall-clock analysis time | Per-query end-to-end seconds |
+| **Tokens/Query** | LLM token consumption | Sum of all agent + coordinator tokens |
+| **F1 Score** | Extraction quality (Llama-PcapLog eval) | Harmonic mean of Precision & Recall |
+| **Pass@k** | Code generation correctness | Fraction of k samples with correct output |
+
+### Structured Data Schema (Agent ↔ Coordinator Communication)
+
+Each agent returns an `AgentIntelligence` JSON object to the coordinator:
+
+```json
+{
+    "task_id": "a1b2c3d4-...",
+    "agent_domain": "packet_analysis",
+    "verdict": "Malicious",
+    "confidence": 0.92,
+    "evidence_summary": "Detected SYN flood pattern...",
+    "detected_patterns": ["DoS", "SYN Flood"],
+    "tool_calls": [
+        {
+            "tool_name": "tshark",
+            "arguments": {"filter": "ip.addr == 172.16.0.1"},
+            "is_valid_syntax": true,
+            "is_correct_selection": true,
+            "execution_success": true,
+            "output_preview": "0.000 172.16.0.1 -> 192.168.10.50 ..."
+        }
+    ],
+    "extracted_entities": ["172.16.0.1"],
+    "processing_latency": 1.23,
+    "tokens_consumed": 256
+}
+```
+
+### Confidence-Weighted Aggregation Formula
+
+The Master Coordinator aggregates agent reports using a two-stage approach:
+
+1. **Confidence Calibration** per agent `i`:
+   - Multi-Signal calculation: `c_i = min(0.50 + 0.15*S_tool + 0.15*S_ground + 0.10*S_pattern + 0.09*S_certain, 0.99)`
+   - Where signals depend on tool success, entity grounding, detected patterns, and explicit verdict without hedging.
+
+2. **Weighted Majority Vote**:
+   ```
+   S_mal = Σ c_i  for all agents with verdict = "Malicious"
+   S_ben = Σ c_i  for all agents with verdict = "Benign"
+   N_mal = count of "Malicious" verdicts
+   N_ben = count of "Benign" verdicts
+
+   if N_mal > N_ben:      final = "Malicious"   (majority wins)
+   elif N_ben > N_mal:    final = "Benign"       (majority wins)
+   else (tie):            final = argmax(S_mal, S_ben)  (confidence tiebreak)
+   ```
+
+### Synthetic Syslog Generation
+
+The test benchmark uses synthetic syslog data generated from CIC-IDS2017 flow metadata:
+
+1. **Input**: CIC-IDS2017 CSV fields (Source IP, Dest IP, Port, Duration, Packet counts, Label).
+2. **Generation**: GPT-5 generates free-form Linux syslog lines (no fixed template).
+3. **Data Leakage Prevention**: Ground-truth labels (e.g., "FTP-Patator", "DDoS") are
+   **NOT embedded** in the syslog text. Instead, the LLM produces naturalistic log entries
+   (e.g., "Failed password for root from 192.168.10.50", "SYN flood detected from 172.16.0.1").
+4. **Validation**: Run `python scripts/validate_data_leakage.py` to verify.
+
+### Scalability Architecture
+
+The system supports horizontal scaling via Redis Pub/Sub:
+
+```
+                    ┌─────────────┐
+                    │   Redis     │
+                    │  Pub/Sub    │
+                    └──────┬──────┘
+                           │
+              ┌────────────┼────────────┐
+              │            │            │
+        ┌─────▼─────┐ ┌───▼────┐ ┌────▼─────┐
+        │  Packet    │ │  Log   │ │ Packet   │  ← Scale-out
+        │  Agent #1  │ │ Agent  │ │ Agent #2 │
+        └────────────┘ └────────┘ └──────────┘
+```
+
+To add more agents:
+1. Start additional Docker containers with the same `AGENT_ROLE`
+2. Each agent auto-registers via the `AGENT_REGISTER` topic
+3. The coordinator dispatches work to all registered agents
+4. Results are collected via `MASTER_AGGREGATION` with timeout-based fault tolerance
+
+### Validation & Analysis Scripts
+
+```bash
+# Validate no data leakage in synthetic syslog
+python scripts/validate_data_leakage.py
+
+# Classify hallucinations (Critical vs Benign)
+python scripts/analyze_hallucination.py
+
+# RTT-corrected latency comparison
+python scripts/analyze_latency_rtt.py --measure-rtt
+```
 
 ## References
-
 - CIC-IDS2017 Dataset: https://www.unb.ca/cic/datasets/ids-2017.html
-- Llama-PcapLog: (paper or model link)
+- Llama-PcapLog (GitHub): https://github.com/choihyuunmin/Llama-PcapLog
+- Llama-PcapLog (HuggingFace): https://huggingface.co/CNU-CHOI/Llama-PcapLog
