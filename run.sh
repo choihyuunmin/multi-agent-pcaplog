@@ -56,6 +56,18 @@ case "$1" in
     echo "Running tests..."
     uv run pytest tests/ -v
     ;;
+  "validate-leakage")
+    echo "Validating synthetic syslog data leakage..."
+    uv run python scripts/validate_data_leakage.py
+    ;;
+  "analyze-hallucination")
+    echo "Analyzing hallucination classification..."
+    uv run python scripts/analyze_hallucination.py
+    ;;
+  "analyze-rtt")
+    echo "Analyzing latency RTT separation..."
+    uv run python scripts/analyze_latency_rtt.py "$@"
+    ;;
   *)
     echo "multi-agent-pcaplog - Multi-Agent Security Analysis System"
     echo ""
@@ -85,5 +97,10 @@ case "$1" in
     echo "Utilities:"
     echo "  pubsub-log          : Regenerate pub/sub message log"
     echo "  test                : Run unit tests"
+    echo ""
+    echo "Reviewer Validation:"
+    echo "  validate-leakage    : Check synthetic syslog for data leakage"
+    echo "  analyze-hallucination: Classify hallucinations (Critical vs Benign)"
+    echo "  analyze-rtt         : Latency RTT separation analysis"
     ;;
 esac

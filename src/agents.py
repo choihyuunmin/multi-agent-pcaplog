@@ -248,7 +248,48 @@ class LocalSecurityAgent:
                 detected_patterns.append("anomaly")
 
         processing_latency = time.time() - start_time
-        confidence = min(0.5 + (tokens_used / 2000), 0.99) if tokens_used > 0 else (0.85 if verdict == "Malicious" else 0.9)
+        # Multi-Signal Confidence Calibration
+        # ====================================
+        # Each agent's confidence c_i is computed as a weighted sum of
+        # four independently verifiable binary signals:
+        #
+        #   c_i = c_base + w1·S_tool + w2·S_ground + w3·S_pattern + w4·S_certain
+        #
+        # where:
+        #   c_base    = 0.50  (baseline floor — prevents zero-confidence)
+        #   S_tool    ∈ {0,1}: Did the analysis tool (tshark/grep) execute
+        #                      successfully and return non-empty data?
+        #   S_ground  ∈ {0,1}: Entity grounding — does the target IP appear
+        #                      in the raw tool output? (anti-hallucination)
+        #   S_pattern ∈ {0,1}: Were concrete attack patterns (DoS, BruteForce,
+        #                      PortScan) detected in the evidence?
+        #   S_certain ∈ {0,1}: Did the LLM produce an explicit VERDICT tag
+        #                      without hedging language?
+        #
+        # Weights: w1=0.15, w2=0.15, w3=0.10, w4=0.09  (sum=0.49)
+        # Range:   c_i ∈ [0.50, 0.99]
+        #
+        # Rationale: This formulation rewards agents whose conclusions are
+        # grounded in real tool output and unambiguous reasoning, while
+        # penalizing those relying on speculation or hallucinated context.
+        # The bounded range [0.50, 0.99] prevents any single agent from
+        # dominating the coordinator's majority-vote aggregation.
+
+        s_tool = 1.0 if has_raw_data else 0.0
+        s_ground = 0.0 if is_hallucinated else 1.0
+        s_pattern = 1.0 if detected_patterns and detected_patterns != ["anomaly"] else 0.0
+
+        # Linguistic certainty: explicit VERDICT tag without hedging
+        hedging_words = ["might", "possibly", "could be", "unclear", "not sure",
+                         "potentially", "seems", "appears to"]
+        if tokens_used > 0:
+            has_explicit_verdict = "verdict:" in evidence_summary.lower()
+            has_hedging = any(w in evidence_summary.lower() for w in hedging_words)
+            s_certain = 1.0 if (has_explicit_verdict and not has_hedging) else 0.0
+        else:
+            s_certain = 0.0
+
+        confidence = min(0.50 + 0.15 * s_tool + 0.15 * s_ground + 0.10 * s_pattern + 0.09 * s_certain, 0.99)
 
         tool_info = ToolCallInfo(
             tool_name=tool_name,
@@ -416,7 +457,26 @@ class MasterOrchestrator:
             r.agent_domain == TaskType.LOG_ANALYSIS.value for r in self.reports
         ) else "failed"
 
-        # Step 4: Synthesis — confidence-weighted majority vote
+        # Step 4: Synthesis — Confidence-Weighted Majority Vote
+        # ======================================================
+        # Given N agent reports, each with verdict v_i ∈ {Malicious, Benign}
+        # and calibrated confidence c_i ∈ [0, 1], the aggregation proceeds:
+        #
+        #   S_mal = Σ c_i  for all i where v_i = "Malicious"
+        #   S_ben = Σ c_i  for all i where v_i = "Benign"
+        #   N_mal = |{i : v_i = "Malicious"}|
+        #   N_ben = |{i : v_i = "Benign"}|
+        #
+        # Decision rule (majority-first with confidence tiebreak):
+        #   if N_mal > N_ben:      final_verdict = "Malicious"
+        #   elif N_ben > N_mal:    final_verdict = "Benign"
+        #   else (tie):            final_verdict = "Malicious" if S_mal >= S_ben
+        #                                         else "Benign"
+        #
+        # This two-stage approach ensures that:
+        # 1. A clear majority always wins (democratic consensus).
+        # 2. When agents are evenly split, the higher-confidence side prevails.
+        # 3. No single high-confidence agent can override a consensus.
         self.turns += 1
         if self.reports:
             mal_score = sum(r.confidence for r in self.reports if r.verdict == "Malicious")
