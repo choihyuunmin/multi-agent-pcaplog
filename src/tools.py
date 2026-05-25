@@ -117,9 +117,12 @@ def grep_system_logs(pattern: str, file_path: str) -> str:
         return f"Grep Error: {str(e)}"
 
 
-def apply_snort_rules(data_str: str) -> List[Dict[str, Any]]:
+def apply_snort_rules(data_str: Any) -> List[Dict[str, Any]]:
     if not isinstance(data_str, str):
-        return []
+        if hasattr(data_str, "to_csv"):
+            data_str = data_str.to_csv(index=False)
+        else:
+            data_str = str(data_str) if data_str is not None else ""
     if len(data_str) > _MAX_SNORT_INPUT_LEN:
         data_str = data_str[:_MAX_SNORT_INPUT_LEN]
 

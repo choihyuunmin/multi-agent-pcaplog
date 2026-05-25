@@ -1,0 +1,50 @@
+Section,Scope,Model,Metric,Value,Unit,Source
+Fig5,120-case benchmark,Multi-agent,Success rate,0.94,ratio,Figure 5 and Section 4.2.1
+Fig5,120-case benchmark,Rule-based,Success rate,0.78,ratio,Figure 5 and Section 4.2.1
+Fig5,120-case benchmark,GPT-5,Success rate,0.66,ratio,Figure 5 and Section 4.2.1
+Fig5,120-case benchmark,Gemini-3,Success rate,0.65,ratio,Figure 5 and Section 4.2.1
+Fig5,120-case benchmark,DeepSeek-R1,Success rate,0.78,ratio,Figure 5
+Fig5,120-case benchmark,Llama3,Success rate,0.85,ratio,Figure 5
+Fig5,120-case benchmark,Qwen3,Success rate,0.86,ratio,Figure 5 and Section 4.2.1
+Fig5,120-case benchmark,Multi-agent,Latency,2.97,seconds,Figure 5 and Section 4.2.3
+Fig5,120-case benchmark,Rule-based,Latency,0.0,seconds,Figure 5
+Fig5,120-case benchmark,GPT-5,Latency,30.34,seconds,Section 4.2.3
+Fig5,120-case benchmark,Gemini-3,Latency,92.48,seconds,Section 4.2.3
+Fig5,120-case benchmark,DeepSeek-R1,Latency,20.55,seconds,Figure 5 and Section 4.2.3
+Fig5,120-case benchmark,Llama3,Latency,21.37,seconds,Figure 5 and Section 4.2.3
+Fig5,120-case benchmark,Qwen3,Latency,29.08,seconds,Figure 5 and Section 4.2.3
+Fig5,120-case benchmark,Multi-agent,Tokens,805.65,tokens,Figure 5 and Section 4.2.3
+Fig5,120-case benchmark,Rule-based,Tokens,0.0,tokens,Figure 5
+Fig5,120-case benchmark,GPT-5,Tokens,1988.87,tokens,Section 4.2.3
+Fig5,120-case benchmark,Gemini-3,Tokens,1948.63,tokens,Section 4.2.3
+Fig5,120-case benchmark,DeepSeek-R1,Tokens,1539.09,tokens,Figure 5
+Fig5,120-case benchmark,Llama3,Tokens,1634.24,tokens,Figure 5
+Fig5,120-case benchmark,Qwen3,Tokens,1805.51,tokens,Figure 5
+Fig6,RTT analysis,GPT-5,Estimated network RTT,0.20,seconds,Section 4.2.3
+Fig6,RTT analysis,GPT-5,Pure processing latency,30.14,seconds,Section 4.2.3
+Fig6,RTT analysis,Gemini-3,Estimated network RTT,0.15,seconds,Section 4.2.3
+Fig6,RTT analysis,Gemini-3,Pure processing latency,92.33,seconds,Section 4.2.3
+Table3,Latest threat cases,Multi-agent,Correct,18/20,count,Table 3
+Table3,Latest threat cases,Multi-agent,Accuracy,90.0,percent,Table 3
+Table3,Latest threat cases,Rule-based,Correct,12/20,count,Table 3
+Table3,Latest threat cases,Rule-based,Accuracy,60.0,percent,Table 3
+Table3,Latest threat cases,GPT-5,Correct,16/20,count,Table 3
+Table3,Latest threat cases,GPT-5,Accuracy,80.0,percent,Table 3
+Table3,Latest threat cases,Gemini-3,Correct,17/20,count,Table 3
+Table3,Latest threat cases,Gemini-3,Accuracy,85.0,percent,Table 3
+Table3,Latest threat cases,Llama3,Correct,16/20,count,Table 3
+Table3,Latest threat cases,Llama3,Accuracy,80.0,percent,Table 3
+Table3,Latest threat cases,DeepSeek-R1,Correct,16/20,count,Table 3
+Table3,Latest threat cases,DeepSeek-R1,Accuracy,80.0,percent,Table 3
+Table3,Latest threat cases,Qwen3,Correct,16/20,count,Table 3
+Table3,Latest threat cases,Qwen3,Accuracy,80.0,percent,Table 3
+Table4,Repeated stability,Multi-agent,Success rate mean,0.94,ratio,Table 4
+Table4,Repeated stability,Multi-agent,Success rate SD,0.02,ratio,Table 4
+Table4,Repeated stability,Multi-agent,Tool selection,1.00,ratio,Table 4
+Table4,Repeated stability,Multi-agent,Valid arguments,0.50,ratio,Table 4
+Table4,Repeated stability,Multi-agent,Reasoning steps,3.00,count,Table 4
+Table4,Repeated stability,Multi-agent,Explanation hallucination,0.31,ratio,Table 4
+Table4,Repeated stability,GPT-5,Success rate,0.66,ratio,Table 4
+Table4,Repeated stability,Gemini-3,Success rate,0.65,ratio,Table 4
+Table5,Hallucination,Multi-agent,Extra-note rate,0.31,ratio,Table 5
+Table5,Hallucination,Multi-agent,Verdict-changing class error rate,0.0,ratio,Table 5

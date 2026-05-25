@@ -19,6 +19,28 @@ os.makedirs(DATA_DIR, exist_ok=True)
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
 
+def _behavior_hint(label: str, dest_port: int, fwd_pkts: int, bwd_pkts: int) -> str:
+    """Return a generic behavior description without exposing CIC-IDS2017 label names."""
+    l = str(label).lower()
+    if label == "BENIGN":
+        return "routine application or host communication"
+    if "patator" in l or "brute" in l:
+        return "repeated authentication failures or credential guessing"
+    if "slowloris" in l or "slowhttp" in l:
+        return "slow HTTP connection exhaustion behavior"
+    if "hulk" in l or "goldeneye" in l or "ddos" in l or "dos" in l:
+        return "high-volume service flooding behavior"
+    if "portscan" in l or "scan" in l:
+        return "repeated connection attempts across ports"
+    if "web attack" in l or "xss" in l or "sql" in l:
+        return "suspicious web application input or probing"
+    if "bot" in l:
+        return "command-and-control style callback behavior"
+    if "infiltration" in l:
+        return "unauthorized internal activity after initial access"
+    return f"suspicious traffic pattern on destination port {dest_port} with {fwd_pkts}/{bwd_pkts} packet directionality"
+
+
 async def create_threat_dataset():
     csv_files = glob.glob(os.path.join(ROOT, "data", "*.pcap_ISCX.csv"))
     llm = LLMProvider(backend="auto", model="gpt-5")
@@ -65,6 +87,7 @@ async def create_threat_dataset():
         fwd_pkts = int(row["Total Fwd Packets"]) if pd.notna(row["Total Fwd Packets"]) else 0
         bwd_pkts = int(row["Total Backward Packets"]) if pd.notna(row["Total Backward Packets"]) else 0
 
+        behavior_hint = _behavior_hint(label, dest_port, fwd_pkts, bwd_pkts)
         threat_context = {
             "source_ip": src_ip,
             "destination_ip": dst_ip,
@@ -72,7 +95,8 @@ async def create_threat_dataset():
             "flow_duration_sec": duration,
             "fwd_packets": fwd_pkts,
             "bwd_packets": bwd_pkts,
-            "attack_type": label,
+            "verdict_hint": "benign" if label == "BENIGN" else "malicious",
+            "behavior_hint": behavior_hint,
             "timestamp": str(row["Timestamp"]) if pd.notna(row.get("Timestamp")) else "",
         }
 
@@ -81,10 +105,11 @@ async def create_threat_dataset():
 Threat/Flow context:
 {json.dumps(threat_context, indent=2)}
 
-Write 1-2 lines of realistic Linux syslog that would be logged when this activity occurs. 
-- For attacks (non-BENIGN): describe the threat naturally — failed logins, connection floods, port scans, infiltration, etc. Write however a real system would log it.
-- For BENIGN: write normal operation logs — successful connections, routine traffic.
+Write 1-2 lines of realistic Linux syslog that would be logged when this activity occurs.
+- For malicious activity, describe only observable symptoms such as failed logins, connection floods, repeated connection attempts, suspicious web input, or unauthorized process/file activity.
+- For benign activity, write normal operation logs such as successful connections or routine traffic.
 - Include the source IP ({src_ip}) in the log so we can correlate.
+- Do NOT include benchmark label names such as BENIGN, DDoS, DoS Hulk, DoS GoldenEye, DoS slowloris, PortScan, Bot, Patator, Infiltration, XSS, or SQL Injection.
 - No fixed format. Write naturally as a Linux daemon/kernel would.
 Output ONLY the syslog line(s). No explanation, no markdown."""
 
@@ -93,12 +118,12 @@ Output ONLY the syslog line(s). No explanation, no markdown."""
             log_text = (res.get("text") or "").strip().strip('"\'')
             lines = [ln.strip() for ln in log_text.split("\n") if ln.strip()]
             if not lines or src_ip not in " ".join(lines):
-                lines = [f"[{label}] Suspicious activity from {src_ip} to {dst_ip}:{dest_port}"]
+                lines = [f"securityd: suspicious {behavior_hint} from {src_ip} to {dst_ip}:{dest_port}"]
             syslog_per_row.append(lines)
             print(f"  [{i+1}/{total}] {label} ({src_ip}) → {lines[0][:70]}...")
         except Exception as e:
             print(f"  Syslog gen failed for {src_ip}: {e}")
-            syslog_per_row.append([f"[{label}] Activity from {src_ip}"])
+            syslog_per_row.append([f"securityd: observed {behavior_hint} from {src_ip}"])
 
     syslog_lines = []
     for lines in syslog_per_row:
@@ -125,6 +150,14 @@ Output ONLY the syslog line(s). No explanation, no markdown."""
             "timestamp": str(row["Timestamp"]),
         }
 
+        expected_verdict = "Malicious" if label != "BENIGN" else "Benign"
+        behavior_hint = _behavior_hint(
+            label,
+            int(row["Destination Port"]) if pd.notna(row["Destination Port"]) else 0,
+            int(row["Total Fwd Packets"]) if pd.notna(row["Total Fwd Packets"]) else 0,
+            int(row["Total Backward Packets"]) if pd.notna(row["Total Backward Packets"]) else 0,
+        )
+
         prompt = f"""You have this real syslog and network flow data (from IDS):
 
 Syslog:
@@ -132,11 +165,13 @@ Syslog:
 
 Flow: {json.dumps(context)}
 
-Ground truth: {label} (Malicious if not BENIGN, else Benign).
+Expected verdict for dataset construction: {expected_verdict}.
+Observable behavior category: {behavior_hint}.
 
 Create a test case for an attack detection system:
 1) One investigation question (natural language) that asks whether this activity is malicious and what kind of attack.
 2) The correct answer: verdict (Malicious or Benign) and brief reason.
+Do NOT include benchmark label names such as BENIGN, DDoS, DoS Hulk, DoS GoldenEye, DoS slowloris, PortScan, Bot, Patator, Infiltration, XSS, or SQL Injection in the question or answer.
 
 Output JSON only: {{"question": "...", "answer": {{"verdict": "Malicious" or "Benign", "reason": "..."}}}}"""
 
@@ -151,7 +186,7 @@ Output JSON only: {{"question": "...", "answer": {{"verdict": "Malicious" or "Be
                 "id": i + 1,
                 "question": qca_json.get("question", f"Does activity from {src_ip} indicate an attack?"),
                 "context": context,
-                "expected_answer": qca_json.get("answer", {"verdict": "Malicious" if label != "BENIGN" else "Benign", "reason": str(label)}),
+                "expected_answer": qca_json.get("answer", {"verdict": expected_verdict, "reason": behavior_hint}),
                 "ground_truth_label": label,
                 "target_ip": src_ip,
             })
@@ -160,7 +195,7 @@ Output JSON only: {{"question": "...", "answer": {{"verdict": "Malicious" or "Be
                 "id": i + 1,
                 "question": f"Does the syslog and packet data from {src_ip} indicate an attack?",
                 "context": context,
-                "expected_answer": {"verdict": "Malicious" if label != "BENIGN" else "Benign", "reason": str(label)},
+                "expected_answer": {"verdict": expected_verdict, "reason": behavior_hint},
                 "ground_truth_label": label,
                 "target_ip": src_ip,
             })

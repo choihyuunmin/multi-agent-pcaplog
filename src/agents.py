@@ -366,6 +366,8 @@ class MasterOrchestrator:
         """expected 개수의 보고서가 모일 때까지 대기. timeout 초과 시 부분 결과로 진행."""
         self._expected_reports = expected
         self._report_event.clear()
+        if expected <= 0 or len(self.reports) >= expected:
+            return
         try:
             await asyncio.wait_for(self._report_event.wait(), timeout=timeout)
         except asyncio.TimeoutError:

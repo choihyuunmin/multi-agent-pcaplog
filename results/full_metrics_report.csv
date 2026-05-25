@@ -1,0 +1,33 @@
+Architecture,Metric,Value
+MAS,Success Rate,0.94
+MAS,Latency (s),2.97
+MAS,Tokens/task,805.65
+Rule-based,Success Rate,0.78
+Rule-based,Latency (s),0.0
+Rule-based,Tokens/task,0.0
+GPT-5,Success Rate,0.66
+GPT-5,Latency (s),30.34
+GPT-5,Pure Processing Latency (s),30.14
+GPT-5,Tokens/task,1988.87
+Gemini-3,Success Rate,0.65
+Gemini-3,Latency (s),92.48
+Gemini-3,Pure Processing Latency (s),92.33
+Gemini-3,Tokens/task,1948.63
+Llama3,Success Rate,0.85
+Llama3,Latency (s),21.37
+Llama3,Tokens/task,1634.24
+DeepSeek-R1,Success Rate,0.78
+DeepSeek-R1,Latency (s),20.55
+DeepSeek-R1,Tokens/task,1539.09
+Qwen3,Success Rate,0.86
+Qwen3,Latency (s),29.08
+Qwen3,Tokens/task,1805.51
+Latest Threats,MAS Accuracy (%),90.0
+Latest Threats,Rule-based Accuracy (%),60.0
+Latest Threats,GPT-5 Accuracy (%),80.0
+Latest Threats,Gemini-3 Accuracy (%),85.0
+Latest Threats,Llama3 Accuracy (%),80.0
+Latest Threats,DeepSeek-R1 Accuracy (%),80.0
+Latest Threats,Qwen3 Accuracy (%),80.0
+Hallucination,Extra-note rate,0.31
+Hallucination,Verdict-changing class error rate,0.0

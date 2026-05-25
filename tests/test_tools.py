@@ -41,15 +41,19 @@ def test_tools():
     print("\n[1] grep_system_logs (논문: direct analysis on system logs)")
     grep_res = grep_system_logs("192.168.10.50", csv_path)
     print(f"    Snippet: {str(grep_res)[:120]}...")
+    assert "192.168.10.50" in grep_res
 
     print("\n[2] apply_snort_rules (Baseline: centralized rule-set)")
     df = pd.read_csv(csv_path)
     alerts = apply_snort_rules(df)
     print(f"    Alerts found: {len(alerts)}")
+    assert alerts
+    assert any("FTP" in alert["rule"] for alert in alerts)
 
     print("\n[3] run_tshark (논문: tool-based analysis on raw packets)")
     tshark_res = run_tshark("ip.addr == 192.168.10.50", pcap_path)
     print(f"    Result: {str(tshark_res)[:120]}...")
+    assert isinstance(tshark_res, str)
 
     print("\n" + "=" * 50)
     print("TOOLS UNIT TEST COMPLETE")

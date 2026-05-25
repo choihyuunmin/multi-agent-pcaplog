@@ -1,0 +1,5 @@
+Type,Count,Rate,Description
+Correctly grounded or harmlessly grounded,83,0.69,Agent evidence summary stays grounded enough for the parsed final verdict
+Extra note,37,0.31,Unsupported extra explanation appears in an intermediate summary but the parsed verdict and evidence fields stay the same
+Verdict-changing class error,0,0.0,Unsupported claim changes the final classification
+Total reviewed cases,120,1.0,Same 120-case evaluation benchmark used in the paper

@@ -1,0 +1,8 @@
+Model,Architecture,Total_Latency_s,Estimated_Network_RTT_s,Pure_Processing_Latency_s,RTT_Proportion,SR,Tokens,Is_Local
+MAS,MAS,2.97,0.0,2.97,0.0%,0.94,805.65,Yes
+Rule,Rule,0.0,0.0,0.0,N/A,0.78,0.0,Yes
+gpt-5,SA,30.3445,0.2,30.1445,0.7%,0.6583333333333333,1988.8666666666666,No
+gemini-3,SA,92.47858333333333,0.15,92.32858333333333,0.2%,0.65,1948.625,No
+llama3,SA,21.37,0.001,21.369,0.0%,0.85,1634.24,Yes
+deepseek-r1,SA,20.55,0.001,20.549,0.0%,0.78,1539.09,Yes
+qwen3,SA,29.08,0.001,29.079,0.0%,0.86,1805.51,Yes
