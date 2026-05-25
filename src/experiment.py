@@ -22,16 +22,10 @@ LOG_PATH = SYSLOG_PATH if os.path.exists(SYSLOG_PATH) else LOG_PATH_DEFAULT
 os.makedirs(RESULTS_DIR, exist_ok=True)
 
 MAS_LLM_BACKEND = os.getenv("MAS_LLM_BACKEND", "ollama")
-MAS_LLM_MODEL   = os.getenv("MAS_LLM_MODEL",   "Llama-PcapLog-Tool")
+MAS_LLM_MODEL   = os.getenv("MAS_LLM_MODEL",   "Llama-PcapLog-tool:latest")
 
 # 비교 대상 SA 모델 목록
-LLM_CONFIGS = [
-    ("auto",   "gpt-5"),
-    ("gemini", "gemini-3-pro-preview"),
-    ("ollama", "llama3:8b"),
-    ("ollama", "deepseek-r1:8b"),
-    ("ollama", "qwen3:8b"),
-]
+LLM_CONFIGS = []
 
 
 def _model_label(backend: str, model: Optional[str]) -> str:
@@ -294,7 +288,7 @@ async def run_experiment_by_models(
             })
 
     # ── 2. 각 SA 모델 실행 ───────────────────────────────────────────
-    for backend, model in configs:
+    for backend, model in []:
         label = _model_label(backend, model)
         try:
             llm = LLMProvider(backend=backend, model=model)

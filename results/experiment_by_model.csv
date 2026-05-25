@@ -1,0 +1,121 @@
+Category,Model,SR,Latency,Tokens
+BENIGN,multi-agent,0,159.97,2140
+DoS Hulk,multi-agent,0,148.38,1598
+DoS GoldenEye,multi-agent,1,222.38,2226
+DoS Hulk,multi-agent,0,156.1,1433
+BENIGN,multi-agent,0,134.12,1443
+PortScan,multi-agent,1,218.9,1952
+BENIGN,multi-agent,1,146.19,1565
+PortScan,multi-agent,1,89.29,1545
+BENIGN,multi-agent,1,116.36,1526
+BENIGN,multi-agent,1,141.57,1517
+DoS Hulk,multi-agent,0,129.48,1589
+PortScan,multi-agent,1,201.89,2053
+BENIGN,multi-agent,1,113.97,1342
+DDoS,multi-agent,0,107.65,1386
+BENIGN,multi-agent,0,194.6,2292
+PortScan,multi-agent,0,114.1,1305
+BENIGN,multi-agent,1,105.65,1474
+BENIGN,multi-agent,0,151.37,1393
+BENIGN,multi-agent,1,88.98,1217
+PortScan,multi-agent,0,129.47,1560
+DoS Hulk,multi-agent,0,153.4,1590
+BENIGN,multi-agent,1,115.34,1761
+DDoS,multi-agent,1,168.33,2153
+DoS Hulk,multi-agent,1,170.56,2104
+DoS Hulk,multi-agent,1,142.65,2015
+DDoS,multi-agent,1,97.96,1330
+BENIGN,multi-agent,1,172.64,2496
+BENIGN,multi-agent,1,90.56,1315
+DDoS,multi-agent,0,85.3,1344
+DoS Hulk,multi-agent,0,150.17,1441
+DoS Hulk,multi-agent,1,74.36,1376
+BENIGN,multi-agent,0,183.73,2061
+BENIGN,multi-agent,0,185.05,2240
+DoS Hulk,multi-agent,0,108.07,1444
+BENIGN,multi-agent,1,154.27,2125
+BENIGN,multi-agent,1,134.56,1548
+DoS Hulk,multi-agent,1,157.72,2030
+DoS Hulk,multi-agent,0,133.96,1229
+BENIGN,multi-agent,1,66.17,1572
+DoS Slowhttptest,multi-agent,1,155.76,2306
+BENIGN,multi-agent,0,186.61,2169
+PortScan,multi-agent,1,114.65,1941
+Bot,multi-agent,1,152.06,2134
+DoS Hulk,multi-agent,0,89.57,1510
+DoS Hulk,multi-agent,1,153.65,2105
+BENIGN,multi-agent,0,166.6,2034
+DDoS,multi-agent,1,93.56,1153
+BENIGN,multi-agent,0,129.19,1673
+DDoS,multi-agent,0,109.23,1374
+DoS Hulk,multi-agent,0,125.28,1519
+BENIGN,multi-agent,1,167.01,2200
+DoS Hulk,multi-agent,0,127.54,1372
+PortScan,multi-agent,0,112.09,1529
+SSH-Patator,multi-agent,1,156.52,2198
+BENIGN,multi-agent,0,141.02,2161
+DoS Hulk,multi-agent,0,93.62,1253
+BENIGN,multi-agent,0,181.54,2306
+DoS Hulk,multi-agent,0,109.36,1521
+DoS Hulk,multi-agent,1,210.93,2314
+DoS Hulk,multi-agent,0,122.41,1345
+BENIGN,multi-agent,0,119.89,1842
+DoS Hulk,multi-agent,0,125.12,1285
+DDoS,multi-agent,0,125.5,1696
+BENIGN,multi-agent,1,134.33,1311
+DoS Hulk,multi-agent,0,105.19,1608
+DoS Slowhttptest,multi-agent,0,105.85,1595
+BENIGN,multi-agent,1,96.67,1495
+DoS Hulk,multi-agent,0,142.39,1722
+BENIGN,multi-agent,1,115.02,1626
+BENIGN,multi-agent,1,101.66,1293
+BENIGN,multi-agent,1,207.08,2081
+BENIGN,multi-agent,0,94.88,1522
+DoS Hulk,multi-agent,0,124.38,1512
+PortScan,multi-agent,0,125.24,1336
+DoS Hulk,multi-agent,0,88.72,1695
+DoS Hulk,multi-agent,1,163.89,1968
+BENIGN,multi-agent,1,92.14,1379
+DoS Hulk,multi-agent,1,205.0,2159
+BENIGN,multi-agent,1,116.18,1513
+DDoS,multi-agent,0,113.95,1513
+BENIGN,multi-agent,1,91.1,1571
+BENIGN,multi-agent,1,129.0,1588
+PortScan,multi-agent,0,70.63,1365
+PortScan,multi-agent,1,182.62,2227
+DDoS,multi-agent,0,84.21,1508
+BENIGN,multi-agent,1,163.77,2212
+PortScan,multi-agent,0,154.14,1634
+BENIGN,multi-agent,1,101.46,1389
+DoS Hulk,multi-agent,1,156.23,2042
+DDoS,multi-agent,0,103.1,1361
+BENIGN,multi-agent,1,167.0,2399
+BENIGN,multi-agent,0,161.44,1902
+BENIGN,multi-agent,1,113.54,1448
+PortScan,multi-agent,0,170.97,1414
+PortScan,multi-agent,1,93.74,1523
+DoS Hulk,multi-agent,1,112.19,1202
+DoS slowloris,multi-agent,0,112.22,1351
+DDoS,multi-agent,1,119.18,1877
+DoS Hulk,multi-agent,1,92.33,1618
+PortScan,multi-agent,1,45.36,1482
+Infiltration,multi-agent,1,119.79,2020
+Web Attack Sql Injection,multi-agent,1,78.67,1374
+Infiltration,multi-agent,0,50.25,812
+DDoS,multi-agent,1,143.85,1509
+Infiltration,multi-agent,1,125.74,1653
+Infiltration,multi-agent,1,172.24,2533
+SSH-Patator,multi-agent,1,150.72,2246
+Infiltration,multi-agent,1,126.83,1335
+PortScan,multi-agent,0,88.27,1509
+DoS Hulk,multi-agent,1,165.26,2064
+Infiltration,multi-agent,1,151.43,2196
+Infiltration,multi-agent,1,145.16,2114
+BENIGN,multi-agent,1,161.45,2020
+BENIGN,multi-agent,1,82.0,1432
+BENIGN,multi-agent,1,168.03,2288
+DoS Slowloris,multi-agent,1,145.63,1998
+Infiltration,multi-agent,1,115.59,1933
+Infiltration,multi-agent,0,40.19,1348
+FTP-Patator,multi-agent,1,54.46,2006
+BENIGN,multi-agent,0,41.76,1802

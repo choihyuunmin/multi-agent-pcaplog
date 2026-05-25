@@ -32,7 +32,7 @@ class LLMProvider:
                     base_url=base_url,
                     api_key="ollama",
                 )
-                self.model_name = model or "Llama-PcapLog-Tool"
+                self.model_name = model or "Llama-PcapLog-tool:latest"
                 self.backend = "ollama"
                 logger.info(f"Ollama client initialized: {base_url} with model {self.model_name}")
                 return
@@ -156,9 +156,15 @@ class LocalSecurityAgent:
         logger.info("Agent deregistered: %s", self.agent_id)
 
     async def on_task_received(self, message: AgentMessage):
+        try:
+            await self._on_task_received_impl(message)
+        except Exception as e:
+            print(f"Exception in on_task_received: {e}", flush=True)
+    async def _on_task_received_impl(self, message: AgentMessage):
         start_time = time.time()
         params = TaskParameter(**message.payload)
 
+        print(f"Agent {self.agent_id} started on_task_received", flush=True)
         is_correct_tool = True
 
         if self.domain == TaskType.PACKET_ANALYSIS:
@@ -325,7 +331,7 @@ class LocalSecurityAgent:
 
 class MasterOrchestrator:
     # 보고서 수집 타임아웃 (초)
-    REPORT_TIMEOUT = 30.0
+    REPORT_TIMEOUT = 300.0
 
     def __init__(self, agent_id: str, llm: LLMProvider):
         self.agent_id = agent_id
