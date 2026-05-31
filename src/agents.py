@@ -16,6 +16,13 @@ from src.tools import run_tshark, grep_system_logs, apply_snort_rules
 
 logger = logging.getLogger(__name__)
 
+CONFIDENCE_WEIGHTS = {
+    "tool": float(os.getenv("CONF_WEIGHT_TOOL", "1.0")),
+    "ground": float(os.getenv("CONF_WEIGHT_GROUND", "1.0")),
+    "pattern": float(os.getenv("CONF_WEIGHT_PATTERN", "1.0")),
+    "certain": float(os.getenv("CONF_WEIGHT_CERTAIN", "1.0")),
+}
+
 class LLMProvider:
     def __init__(self, backend: str = "auto", model: Optional[str] = None):
         self.backend = backend
@@ -254,35 +261,16 @@ class LocalSecurityAgent:
                 detected_patterns.append("anomaly")
 
         processing_latency = time.time() - start_time
-        # Multi-Signal Confidence Calibration
-        # ====================================
-        # Each agent's confidence c_i is computed as a weighted sum of
-        # four independently verifiable binary signals:
+        # Multi-signal confidence calibration:
+        #   c_i = (w_t*S_t + w_g*S_g + w_p*S_p + w_c*S_c)
+        #         / (w_t + w_g + w_p + w_c)
         #
-        #   c_i = c_base + w1·S_tool + w2·S_ground + w3·S_pattern + w4·S_certain
-        #
-        # where:
-        #   c_base    = 0.50  (baseline floor — prevents zero-confidence)
-        #   S_tool    ∈ {0,1}: Did the analysis tool (tshark/grep) execute
-        #                      successfully and return non-empty data?
-        #   S_ground  ∈ {0,1}: Entity grounding — does the target IP appear
-        #                      in the raw tool output? (anti-hallucination)
-        #   S_pattern ∈ {0,1}: Were concrete attack patterns (DoS, BruteForce,
-        #                      PortScan) detected in the evidence?
-        #   S_certain ∈ {0,1}: Did the LLM produce an explicit VERDICT tag
-        #                      without hedging language?
-        #
-        # Weights: w1=0.15, w2=0.15, w3=0.10, w4=0.09  (sum=0.49)
-        # Range:   c_i ∈ [0.50, 0.99]
-        #
-        # Rationale: This formulation rewards agents whose conclusions are
-        # grounded in real tool output and unambiguous reasoning, while
-        # penalizing those relying on speculation or hallucinated context.
-        # The bounded range [0.50, 0.99] prevents any single agent from
-        # dominating the coordinator's majority-vote aggregation.
+        # The normalized weighted sum avoids a fixed baseline or artificial cap.
+        # Default weights are configurable through CONF_WEIGHT_* environment
+        # variables and can be calibrated without changing the equation.
 
         s_tool = 1.0 if has_raw_data else 0.0
-        s_ground = 0.0 if is_hallucinated else 1.0
+        s_ground = 1.0 if has_raw_data and not is_hallucinated else 0.0
         s_pattern = 1.0 if detected_patterns and detected_patterns != ["anomaly"] else 0.0
 
         # Linguistic certainty: explicit VERDICT tag without hedging
@@ -295,7 +283,21 @@ class LocalSecurityAgent:
         else:
             s_certain = 0.0
 
-        confidence = min(0.50 + 0.15 * s_tool + 0.15 * s_ground + 0.10 * s_pattern + 0.09 * s_certain, 0.99)
+        w_t = CONFIDENCE_WEIGHTS["tool"]
+        w_g = CONFIDENCE_WEIGHTS["ground"]
+        w_p = CONFIDENCE_WEIGHTS["pattern"]
+        w_c = CONFIDENCE_WEIGHTS["certain"]
+        weight_sum = w_t + w_g + w_p + w_c
+        if weight_sum <= 0:
+            confidence = 0.0
+        else:
+            confidence = (
+                w_t * s_tool
+                + w_g * s_ground
+                + w_p * s_pattern
+                + w_c * s_certain
+            ) / weight_sum
+            confidence = max(0.0, min(confidence, 1.0))
 
         tool_info = ToolCallInfo(
             tool_name=tool_name,

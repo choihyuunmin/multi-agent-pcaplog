@@ -117,7 +117,8 @@ class AgentIntelligence(BaseModel):
         verdict: Binary classification result — "Malicious" or "Benign".
         confidence: Confidence score in [0.0, 1.0], used for weighted voting.
                     Calculated via multi-signal calibration:
-                    c_i = 0.50 + 0.15*S_tool + 0.15*S_ground + 0.10*S_pattern + 0.09*S_certain
+                    c_i = (w_t*S_t + w_g*S_g + w_p*S_p + w_c*S_c)
+                          / (w_t + w_g + w_p + w_c)
         evidence_summary: Natural language summary of the analysis findings.
         detected_patterns: List of detected attack pattern names (e.g., ["DoS", "BruteForce"]).
         tool_calls: Metadata for each tool invocation during analysis.
