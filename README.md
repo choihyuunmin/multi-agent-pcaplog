@@ -6,15 +6,11 @@ structured evidence reports, and produces a final verdict.
 
 ## Demo Video
 
-The demo video is named `demo.mp4` and is kept as a local generated artifact:
+<video src="results/demo/demo.mp4" controls width="100%">
+  Your browser does not support the video tag.
+</video>
 
 [Demo video](results/demo/demo.mp4)
-
-```text
-results/demo/demo.mp4
-```
-
-The video file is intentionally not committed to the remote repository.
 
 For a short setup path, start with [QUICKSTART.md](QUICKSTART.md).
 
