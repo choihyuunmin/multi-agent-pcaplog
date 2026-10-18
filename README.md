@@ -4,6 +4,33 @@ Collaborative multi-agent security analysis for network packets and system
 logs. A coordinator sends structured tasks to packet and log agents, receives
 structured evidence reports, and produces a final verdict.
 
+## Fine-Tuning and Multi-Agent Analysis
+
+This repository includes the Llama-PcapLog model development code and the
+multi-agent analysis system. The model development workflow covers packet and
+syslog preprocessing, training-data preparation, LoRA fine-tuning, and model
+evaluation. The multi-agent system uses packet and log tools to collect evidence
+and combine agent reports.
+
+| Part | Location |
+| --- | --- |
+| Model project and original setup instructions | [llama-pcaplog/](llama-pcaplog/README.md) |
+| Data processing and training datasets | [llama-pcaplog/model/](llama-pcaplog/model/) |
+| LoRA fine-tuning | [llama-pcaplog/model/training/](llama-pcaplog/model/training/) |
+| Model evaluation and test questions | [llama-pcaplog/evaluation/](llama-pcaplog/evaluation/) |
+| Original model web application | [llama-pcaplog/web/](llama-pcaplog/web/README.md) |
+| Multi-agent coordination and analysis tools | [src/](src/) |
+
+The model project retains its own dependencies and working directory. Follow
+its setup instructions from `llama-pcaplog/`. Follow the commands below from the
+repository root for the multi-agent system. Importing the training code does
+not train a model or change the multi-agent model backend automatically.
+
+The model project was imported from
+[llama-syslog-packet](https://github.com/choihyuunmin/llama-syslog-packet)
+at commit `fd3db3674b173d244be61472694ce08cefeb2a7e` without squashing. Its
+original commits and commit messages are retained in this repository's history.
+
 ## Demo Video
 
 <video src="results/demo/demo.mp4" controls width="100%">
