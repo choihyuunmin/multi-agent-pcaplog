@@ -1,382 +1,169 @@
-# multi-agent-pcaplog
+# Llama-PcapLog와 멀티에이전트 패킷·로그 분석
 
-Collaborative multi-agent security analysis for network packets and system
-logs. A coordinator sends structured tasks to packet and log agents, receives
-structured evidence reports, and produces a final verdict.
+Llama를 패킷과 시스템 로그 분석에 맞게 파인튜닝하고, 해당 모델을 두 분석
+에이전트에서 사용하는 프로젝트입니다. 모델 성능을 먼저 평가한 뒤, 패킷과 로그를
+각각 조회하고 결과를 합치는 시스템의 성능을 평가합니다.
 
-## Fine-Tuning and Multi-Agent Analysis
+## 준비
 
-This repository includes the Llama-PcapLog model development code and the
-multi-agent analysis system. The model development workflow covers packet and
-syslog preprocessing, training-data preparation, LoRA fine-tuning, and model
-evaluation. The multi-agent system uses packet and log tools to collect evidence
-and combine agent reports.
-
-| Part | Location |
-| --- | --- |
-| Model project and original setup instructions | [llama-pcaplog/](llama-pcaplog/README.md) |
-| Data processing and training datasets | [llama-pcaplog/model/](llama-pcaplog/model/) |
-| LoRA fine-tuning | [llama-pcaplog/model/training/](llama-pcaplog/model/training/) |
-| Model evaluation and test questions | [llama-pcaplog/evaluation/](llama-pcaplog/evaluation/) |
-| Original model web application | [llama-pcaplog/web/](llama-pcaplog/web/README.md) |
-| Multi-agent coordination and analysis tools | [src/](src/) |
-
-The model project retains its own dependencies and working directory. Follow
-its setup instructions from `llama-pcaplog/`. Follow the commands below from the
-repository root for the multi-agent system. Importing the training code does
-not train a model or change the multi-agent model backend automatically.
-
-The model project was imported from
-[llama-syslog-packet](https://github.com/choihyuunmin/llama-syslog-packet)
-at commit `fd3db3674b173d244be61472694ce08cefeb2a7e` without squashing. Its
-original commits and commit messages are retained in this repository's history.
-
-## Demo Video
-
-<video src="results/demo/demo.mp4" controls width="100%">
-  Your browser does not support the video tag.
-</video>
-
-[Demo video](results/demo/demo.mp4)
-
-For a short setup path, start with [QUICKSTART.md](QUICKSTART.md).
-
-## What This Project Does
-
-The project demonstrates a multi-agent security-analysis workflow:
-
-1. A user asks a security question, usually with a target IP address.
-2. The coordinator extracts the target and decides which agents are needed.
-3. The packet agent inspects PCAP evidence with `tshark`.
-4. The log agent inspects host or syslog evidence with `grep`.
-5. Each agent returns a structured report with verdict, confidence, evidence,
-   tool metadata, and latency.
-6. The coordinator combines the reports with majority voting and confidence
-   tie-breaking.
-
-The paper version evaluates this design on a 120-case benchmark and compares it
-with single-agent and rule-based baselines.
-
-## Architecture
-
-```text
-User query
-   |
-   v
-Coordinator
-   | publishes JSON tasks
-   v
-Message bus
-   |--------------------|
-   v                    v
-Packet agent        Log agent
-PCAP/tshark         syslog/grep
-   |                    |
-   | structured reports |
-   v                    v
-Coordinator aggregation
-   |
-   v
-Final verdict and explanation
-```
-
-Two message buses are supported:
-
-- Local in-memory bus for the web app, tests, and simple experiments.
-- Redis Pub/Sub for Docker Compose multi-container runs.
-
-## Requirements
-
-Required for local development:
-
-- Python 3.11+
-- `uv`
-
-Recommended:
-
-- `tshark` from Wireshark for real packet inspection
-- Ollama for local LLM inference
-- Docker Desktop for the Redis-backed multi-container demo
-
-Install example on macOS:
-
-```bash
-brew install uv wireshark
-```
-
-Optional Ollama setup:
-
-```bash
-brew install ollama
-ollama serve
-ollama pull llama3:8b
-```
-
-## First Run
+- Python 3.11, Poetry, uv
+- 모델 학습용 NVIDIA GPU와 CUDA
+- 시스템 평가용 Ollama와 `tshark`
+- Llama 모델 사용 권한과 Hugging Face 계정
 
 ```bash
 git clone https://github.com/choihyuunmin/multi-agent-pcaplog.git
 cd multi-agent-pcaplog
+```
+
+모델 학습·평가는 `llama-pcaplog/`, 멀티에이전트 실행·평가는 저장소 최상위
+폴더에서 진행합니다. 두 프로젝트는 의존성이 달라 환경을 따로 설치합니다.
+
+## 1. Llama 파인튜닝
+
+패킷과 시스템 로그를 질문·입력·응답 형태로 준비하고 Llama 3 8B를 LoRA로
+파인튜닝합니다. 학습 자료와 전처리 코드는 `llama-pcaplog/model/`에 있습니다.
+
+```bash
+cd llama-pcaplog
+poetry env use python3.11
+poetry install
+poetry run python -m pip install peft bitsandbytes datasets
+poetry run python -c "from huggingface_hub import login; login()"
+```
+
+아래 `your-hf-username`을 본인 Hugging Face 계정으로 바꿉니다.
+학습 스크립트는 학습 결과를 저장하고 병합 모델을 Hugging Face에 업로드합니다.
+
+```bash
+poetry run python model/training/train_model.py \
+  --model-name meta-llama/Meta-Llama-3-8B \
+  --dataset-dir model/datasets \
+  --output-dir outputs \
+  --hf-model-name your-hf-username/Llama-PcapLog
+```
+
+## 2. 모델 평가
+
+기본 분석, 고급 분석, 취약점 분류, 코드 생성 과제를 평가합니다.
+파인튜닝 모델과 기본 Llama를 포함한 비교 모델을 순서대로 실행하며,
+정보 추출 점수, 코드 과제 통과 수, 응답시간 등을 저장합니다.
+
+`llama-pcaplog/`에서 실행합니다.
+
+```bash
+poetry run python evaluation/run_benchmark.py \
+  --benchmark_dir evaluation \
+  --output_dir evaluation/results
+```
+
+질문과 정답은 `evaluation/test/test_dataset.json`, 평가 결과는
+`evaluation/results/`에 저장됩니다. 코드 생성 과제는 평가 스크립트에 포함돼
+있습니다. 평가할 모델 목록은 `evaluation/run_benchmark.py`의 `model_configs`에서
+확인할 수 있습니다. 방금 학습한 모델을 평가하려면 목록의 Llama-PcapLog 경로를
+학습 때 지정한 Hugging Face 저장소로 바꿉니다. `OPENAI_API_KEY`가 설정돼 있으면
+GPT-4o도 함께 평가합니다.
+
+## 3. 두 에이전트 구성
+
+패킷 에이전트는 `tshark`로 패킷을 조회하고, 로그 에이전트는 `grep`으로 시스템
+로그를 조회합니다. 두 에이전트는 각 자료를 분석한 결과와 근거를 반환합니다.
+조정기는 질문을 나눠 전달하고, 두 결과를 합쳐 최종 판단을 만듭니다.
+
+```text
+사용자 질문
+    ↓
+조정기
+    ├── 패킷 에이전트: PCAP 조회와 분석
+    └── 로그 에이전트: 시스템 로그 조회와 분석
+    ↓
+결과 결합과 최종 응답
+```
+
+저장소 최상위 폴더로 돌아와 설치합니다.
+
+```bash
+cd ..
 uv sync
 cp .env.example .env
-./run.sh test
-./run.sh app
+ollama list
 ```
 
-Open:
+파인튜닝 모델을 Ollama에 등록하고, `.env`를 아래처럼 수정합니다.
+`MAS_LLM_MODEL`에는 `ollama list`에 표시되는 실제 모델 이름을 넣습니다.
+학습 결과가 Ollama에 자동으로 등록되지는 않습니다.
 
-```text
-http://localhost:8000
-```
-
-Try:
-
-```text
-Analyze traffic for 192.168.10.50
-```
-
-No API key is required for this smoke test. If no model backend is available,
-the system uses a small rule-based fallback so the flow can still be checked.
-
-## Environment Configuration
-
-For local runs, keep Redis disabled:
-
-```env
-REDIS_HOST=
-REDIS_PORT=6379
-```
-
-For local Ollama:
-
-```env
-OLLAMA_HOST=http://localhost:11434
-MAS_LLM_BACKEND=ollama
-MAS_LLM_MODEL=llama3:8b
-```
-
-For the paper model, set:
-
-```env
-MAS_LLM_MODEL=Llama-PcapLog-Tool
-```
-
-OpenAI and Gemini keys are optional and are mainly used for single-agent
-comparison experiments:
-
-```env
+```dotenv
 OPENAI_API_KEY=
 GOOGLE_API_KEY=
-```
-
-Do not put real API keys in committed files.
-
-## Main Commands
-
-```bash
-./run.sh test
-./run.sh app
-./run.sh docker-up
-./run.sh docker-logs
-./run.sh docker-down
-./run.sh experiment
-./run.sh experiment-by-model
-./run.sh plot-paper
-./run.sh plot-by-model
-./run.sh validate-leakage
-./run.sh analyze-hallucination
-./run.sh analyze-rtt
-```
-
-### Local Web App
-
-```bash
-./run.sh app
-```
-
-The local web app creates the coordinator, packet agent, and log agent in one
-Python process. This is the easiest way to verify the workflow.
-
-### Docker Multi-Agent Demo
-
-```bash
-./run.sh docker-up
-```
-
-Docker Compose starts:
-
-- `redis`
-- `packet-agent`
-- `log-agent`
-- `master`
-
-The Docker services set `REDIS_HOST=redis` internally. Local non-Docker runs
-should leave `REDIS_HOST` empty.
-
-### Experiments
-
-Run the architecture comparison:
-
-```bash
-./run.sh experiment
-```
-
-Run the model comparison:
-
-```bash
-./run.sh experiment-by-model
-```
-
-Generate figures:
-
-```bash
-./run.sh plot-paper
-./run.sh plot-by-model
-```
-
-## Outputs
-
-Experiment outputs are written under `results/`.
-
-Common files:
-
-```text
-results/final_experiment_results.csv
-results/full_metrics_report.csv
-results/final_statistical_metrics.csv
-results/experiment_by_model.csv
-results/experiment_by_model_summary.csv
-results/pubsub_messages.jsonl
-```
-
-Figures are written under:
-
-```text
-results/figures/
-```
-
-## Project Structure
-
-```text
-multi-agent-pcaplog/
-├── src/
-│   ├── app.py          # FastAPI web interface
-│   ├── agents.py       # Coordinator, local agents, LLM provider
-│   ├── bus.py          # In-memory and Redis message buses
-│   ├── experiment.py   # Benchmark runners
-│   ├── main.py         # Role-based Docker entry point
-│   ├── protocol.py     # Pydantic message schemas
-│   └── tools.py        # tshark, grep, rule-based baseline tools
-├── scripts/            # Dataset, validation, and plotting helpers
-├── data/               # Local packet/log data
-├── results/            # Benchmark outputs and generated figures
-├── tests/              # Unit tests
-├── docker-compose.yml
-├── Dockerfile
-├── run.sh
-├── QUICKSTART.md
-└── README.md
-```
-
-## Programmatic Use
-
-```python
-import asyncio
-from src.agents import ToolEnabledAgent
-
-async def main():
-    agent = ToolEnabledAgent()
-    result = await agent.ask("Analyze traffic for 192.168.10.50")
-    print(result["answer"])
-    for line in result["execution_log"]:
-        print(line)
-
-asyncio.run(main())
-```
-
-Run it from the repository root so relative data paths resolve correctly.
-
-## Data Notes
-
-The repository includes a small log file for smoke testing. For full
-paper-style experiments, prepare the expected CIC-IDS2017-derived files under:
-
-```text
-data/CIC-IDS2017/
-```
-
-You can generate the synthetic test log and QCA-style dataset with:
-
-```bash
-./run.sh create-dataset
-```
-
-Validation helpers:
-
-```bash
-./run.sh validate-leakage
-./run.sh analyze-hallucination
-./run.sh analyze-rtt
-```
-
-## Troubleshooting
-
-### Local App Cannot Connect to Redis
-
-If you see an error about host `redis`, your local `.env` is using the Docker
-Redis hostname.
-
-Use this for local runs:
-
-```env
+OLLAMA_HOST=http://localhost:11434
+MAS_LLM_BACKEND=ollama
+MAS_LLM_MODEL=Llama-PcapLog-tool:latest
 REDIS_HOST=
+REDIS_PORT=6379
+PUBSUB_LOG_PATH=results/pubsub_messages.jsonl
 ```
 
-Use Docker Compose for Redis-backed runs:
+별도 터미널에서 `ollama serve`를 실행합니다. 이미 실행 중이면 다시 켤 필요는
+없습니다. 로컬 실행에서는 Redis 없이 두 에이전트가 메모리 내 메시지를 주고받습니다.
+
+## 4. 시스템 평가
+
+멀티에이전트, 단일 에이전트, 규칙 기반 분석을 비교합니다. 같은 질문에 대한
+판단 성공률, 응답시간, 토큰 사용량을 측정합니다.
+
+실험 전 아래 파일을 준비합니다.
+
+| 파일 | 용도 |
+| --- | --- |
+| `data/CIC-IDS2017/Tuesday-WorkingHours.pcap` | 패킷 조회 |
+| `data/CIC-IDS2017/syslog_threats.log` | 시스템 로그 조회 |
+| `results/qca_test_dataset_100.json` | 평가 질문과 정답 |
+
+로그 파일이 없으면 코드가 `data/CIC-IDS2017/Tuesday-WorkingHours_converted.csv`를
+대신 사용합니다. 평가 질문은 저장소에 포함돼 있습니다. 직접 자료를 생성하려면
+CIC-IDS2017 CSV를 `data/*.pcap_ISCX.csv`에 두고 `./run.sh create-dataset`을
+실행합니다. 생성된 로그는 합성 로그입니다.
+
+저장소 최상위 폴더에서 실행합니다.
 
 ```bash
-./run.sh docker-up
+./run.sh experiment
 ```
 
-### Ollama Model Is Missing
+기본 실험은 3회 반복합니다. 멀티에이전트는 `.env`의 Ollama 설정을 사용합니다.
+단일 에이전트 비교 경로는 `OPENAI_API_KEY`를 사용하며, 키가 없으면 규칙 기반
+대체 응답을 사용합니다. 실제 LLM 성능을 비교할 때는 키와 호출 성공 로그를
+확인해야 합니다.
+
+| 결과 파일 | 내용 |
+| --- | --- |
+| `results/final_experiment_results.csv` | 질문별 결과 |
+| `results/full_metrics_report.csv` | 방식별 평가 지표 |
+| `results/final_statistical_metrics.csv` | 반복 실험 요약 |
+| `results/pubsub_messages.jsonl` | 에이전트 메시지 기록 |
+
+### 웹 화면 확인
 
 ```bash
-ollama list
-ollama pull llama3:8b
+./run.sh app
 ```
 
-Then set:
+`http://localhost:8000`에서 `Analyze traffic for 192.168.10.50`처럼 질문합니다.
+현재 웹 화면은 `MAS_LLM_MODEL` 대신 별도의 자동 선택 경로를 사용합니다.
+`OPENAI_API_KEY`가 있으면 OpenAI를 호출하고, 없거나 호출에 실패하면 규칙 기반
+대체 응답을 사용합니다. 로컬 모델을 이용한 성능 평가는 위 실험 명령으로 진행합니다.
 
-```env
-MAS_LLM_MODEL=llama3:8b
-```
+## 코드 위치
 
-### `tshark` Is Missing
+| 위치 | 내용 |
+| --- | --- |
+| [llama-pcaplog/model/](llama-pcaplog/model/) | 데이터 전처리와 파인튜닝 |
+| [llama-pcaplog/evaluation/](llama-pcaplog/evaluation/) | 모델 평가 |
+| [src/agents.py](src/agents.py) | 두 에이전트와 조정기 |
+| [src/tools.py](src/tools.py) | 패킷·로그 조회 도구 |
+| [src/experiment.py](src/experiment.py) | 시스템 평가 |
+| [results/](results/) | 평가 결과와 [데모 영상](results/demo/demo.mp4) |
 
-Install Wireshark/tshark:
-
-```bash
-brew install wireshark
-```
-
-The code returns a readable tool error if `tshark` is unavailable, but real PCAP
-analysis requires it.
-
-### Tests Fail Because Dependencies Are Missing
-
-Run:
-
-```bash
-uv sync
-./run.sh test
-```
-
-## Paper
-
-This repository supports the experiments for:
-
-**A Collaborative Multi-Agent Framework for Network Packets and System Logs Analysis**
-
-The paper evaluates a coordinator-agent architecture that avoids sending all raw
-packet and log data to a single large prompt. Instead, each agent extracts local
-evidence and returns a compact structured report for aggregation.
+모델 개발 코드는 [원본 저장소](https://github.com/choihyuunmin/llama-syslog-packet)에서
+가져왔으며, 기존 커밋과 메시지를 그대로 유지했습니다.
